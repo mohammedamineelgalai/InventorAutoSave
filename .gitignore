@@ -1,0 +1,51 @@
+﻿# Build outputs
+bin/
+obj/
+Debug/
+Release/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.cache
+
+# NuGet packages
+packages/
+
+# Binaries
+*.exe
+*.dll
+*.msi
+!nuget.exe
+
+# Logs
+*.log
+Logs/
+
+# Backups
+Backup/
+OLD/
+
+# Temporaires
+*.tmp
+~$*
+
+# Node modules
+node_modules/
+
+# Documentation volumineuse
+SUBMITTAL/
+
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# SECRETS & CREDENTIALS - NE JAMAIS COMMIT!
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+serviceAccountKey.json
+**/serviceAccountKey.json
+*.pfx
+.github-token
+*.p12
+*.pem
+*credentials*.json
+*secret*.json
+config-deploy.json

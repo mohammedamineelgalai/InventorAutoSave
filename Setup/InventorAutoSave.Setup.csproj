@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>InventorAutoSave.Setup</RootNamespace>
+    <AssemblyName>InventorAutoSave.Setup</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget>
+    <ApplicationIcon>..\Resources\InventorAutoSave.ico</ApplicationIcon>
+    <Version>2.0.0</Version>
+    <Company>XNRGY Climate Systems ULC</Company>
+    <Authors>Mohammed Amine Elgalai</Authors>
+    <Description>InventorAutoSave Setup - Installateur</Description>
+  </PropertyGroup>
+
+  <!-- Copier l'icone dans bin -->
+  <ItemGroup>
+    <Content Include="..\Resources\InventorAutoSave.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Resources\InventorAutoSave.ico</Link>
+    </Content>
+  </ItemGroup>
+
+</Project>

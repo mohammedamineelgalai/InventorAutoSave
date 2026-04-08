@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>InventorAutoSave</RootNamespace>
+    <AssemblyName>InventorAutoSave</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <ApplicationIcon>Resources\InventorAutoSave.ico</ApplicationIcon>
+    <Version>2.0.0</Version>
+    <Company>XNRGY Climate Systems ULC</Company>
+    <Authors>Mohammed Amine Elgalai</Authors>
+    <Description>Inventor AutoSave - Smart Tools Amine v2.0 - Sauvegarde automatique via API COM Inventor</Description>
+    <Copyright>© 2026 Mohammed Amine Elgalai - XNRGY Climate Systems ULC</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Icone tray: copie dans le dossier output -->
+    <Content Include="Resources\InventorAutoSave.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <!-- IMPORTANT: Exclure le sous-projet Setup du build principal -->
+    <Compile Remove="Setup\**"/>
+    <Page Remove="Setup\**"/>
+    <EmbeddedResource Remove="Setup\**"/>
+    <None Remove="Setup\**"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
+  </ItemGroup>
+
+</Project>
