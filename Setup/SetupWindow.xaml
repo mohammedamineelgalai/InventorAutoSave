@@ -1,11 +1,11 @@
 <Window x:Class="InventorAutoSave.Setup.SetupWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="InventorAutoSave &#x2014; Installation"
-        Width="620" Height="580"
-        MinWidth="620" MinHeight="580"
+        Title="Installation &#x2014; InventorAutoSave &#x2014; v1.0.0 &#x2014; R 2026-04-08 &#x2014; By Mohammed Amine Elgalai &#x2014; XNRGY CLIMATE SYSTEMS ULC"
+        Width="780" Height="750"
+        MinWidth="780" MinHeight="700"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
         Background="#1a1a2e"
         WindowStyle="None"
         AllowsTransparency="True">
@@ -224,7 +224,6 @@
                             <Run Text="&#x1F4A1;" Foreground="#FFD700"/>
                             <Run Text=" Sauvegarde automatique silencieuse pour Autodesk Inventor" Foreground="#e0e0e0"/>
                         </TextBlock>
-                        <TextBlock Text="XNRGY Climate Systems ULC" FontSize="11" Foreground="#6b7280" Margin="0,3,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -239,7 +238,7 @@
                               VerticalScrollBarVisibility="Auto" Padding="4,0">
                     <StackPanel Margin="22,10,22,10">
 
-                        <TextBlock Text="&#x1F680; Bienvenue dans l'assistant d'installation"
+                        <TextBlock Text="&#x25BA; Bienvenue dans l'assistant d'installation"
                                    Style="{StaticResource SectionHeaderStyle}"/>
 
                         <Border Style="{StaticResource HighlightCardStyle}">
@@ -303,22 +302,40 @@
                             <StackPanel>
                                 <CheckBox x:Name="ChkStartup" Style="{StaticResource OptionCheck}" IsChecked="True">
                                     <TextBlock TextWrapping="Wrap" Foreground="#cccccc" FontSize="12">
-                                        <Run Text="&#x1F680; " Foreground="White"/>
+                                        <Run Text="&#x1F4C5; " Foreground="White"/>
                                         <Run Text="Demarrer automatiquement avec Windows"/>
                                     </TextBlock>
                                 </CheckBox>
                                 <CheckBox x:Name="ChkLaunch" Style="{StaticResource OptionCheck}" IsChecked="True">
                                     <TextBlock TextWrapping="Wrap" Foreground="#cccccc" FontSize="12">
-                                        <Run Text="&#x25B6;&#xFE0F; " Foreground="White"/>
+                                        <Run Text="&#x25BA; " Foreground="White"/>
                                         <Run Text="Lancer InventorAutoSave apres l'installation"/>
                                     </TextBlock>
                                 </CheckBox>
                                 <CheckBox x:Name="ChkShortcut" Style="{StaticResource OptionCheck}" IsChecked="True">
                                     <TextBlock TextWrapping="Wrap" Foreground="#cccccc" FontSize="12">
-                                        <Run Text="&#x1F4CC; " Foreground="White"/>
+                                        <Run Text="&#x1F4CB; " Foreground="White"/>
                                         <Run Text="Creer un raccourci dans le menu Demarrer"/>
                                     </TextBlock>
                                 </CheckBox>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- SECTION DEVELOPPEUR -->
+                        <TextBlock Text="&#x1F464; Developpeur" Style="{StaticResource SectionHeaderStyle}"/>
+                        <Border Style="{StaticResource FeatureCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Mohammed Amine Elgalai" Style="{StaticResource FeatureTitleStyle}"/>
+                                <TextBlock Style="{StaticResource FeatureDescriptionStyle}"
+                                           Text="CAD Designer &amp; Automation Development"/>
+                                <TextBlock Style="{StaticResource FeatureDescriptionStyle}"
+                                           Text="XNRGY Climate Systems ULC" Margin="0,2,0,0"/>
+                                <StackPanel Margin="0,10,0,0">
+                                    <TextBlock Style="{StaticResource FeatureItemStyle}"
+                                               Text="&#x1F4E7; mohammedamine.elgalai@xnrgy.com"/>
+                                    <TextBlock Style="{StaticResource FeatureItemStyle}"
+                                               Text="&#x1F4AC; Teams: @Mohammed Amine Elgalai"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
@@ -446,8 +463,9 @@
                         <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="&#xA9; XNRGY Climate Systems ULC"
-                               Foreground="White" FontSize="10" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="0" 
+                               Text="Installation &#x2014; XEAT &#x2014; v1.0.0 &#x2014; R 2026-04-08 &#x2014; By Mohammed Amine Elgalai &#x2014; XNRGY CLIMATE SYSTEMS ULC"
+                               Foreground="White" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"/>
                     <Button x:Name="BtnCancel" Grid.Column="1"
                             Style="{StaticResource SecondaryButton}"
                             Content="Annuler" Click="BtnCancel_Click"/>
