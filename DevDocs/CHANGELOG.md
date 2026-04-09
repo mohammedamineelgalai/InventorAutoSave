@@ -32,7 +32,7 @@
 - **`StaticResource` → `DynamicResource`** pour `MenuDropShadow` dans les `ControlTemplate` du menu
   et sous-menu — evite `StaticResourceHolder` exception au rendu.
 
-### 📋 Historique des bugs COM resolus (v2.0 → v2.1)
+### 📋 Historique des bugs COM resolus (v1.0 development)
 1. `ole32.dll` au lieu de `oleaut32.dll` → Fix DLL name
 2. `EntryPoint` manquant sur P/Invoke renomme → Ajout `EntryPoint = "GetActiveObject"`
 3. Native WPF DLLs manquantes dans SingleFile → `-p:IncludeNativeLibrariesForSelfExtract=true`
@@ -42,7 +42,7 @@
 
 ---
 
-## v2.0.0 (2026-04-08) — Refonte Dark Theme + Stabilite
+## v1.0.0 (2026-04-08) — Refonte Dark Theme + Stabilite
 
 ### 🎨 Theme Sombre
 - **ContextMenu**: Template complet (`DarkContextMenu`, `DarkMenuItem`, `DarkSeparator`) qui remplace entierement le rendu Windows par defaut

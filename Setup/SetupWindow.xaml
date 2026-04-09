@@ -254,7 +254,7 @@
                             </StackPanel>
                         </Border>
 
-                        <TextBlock Text="&#x2728; Fonctionnalites principales" Style="{StaticResource SectionHeaderStyle}"/>
+                        <TextBlock Text="&#x1F4A1; Fonctionnalites principales" Style="{StaticResource SectionHeaderStyle}"/>
 
                         <Border Style="{StaticResource FeatureCardStyle}">
                             <StackPanel>

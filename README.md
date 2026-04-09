@@ -4,7 +4,7 @@
 >
 > Developpe par **Mohammed Amine Elgalai** — XNRGY Climate Systems ULC
 >
-> **Version**: v2.0.0 | **Date**: 2026-04-08
+> **Version**: v1.0.0 | **Date**: 2026-04-08
 
 ---
 
@@ -177,7 +177,7 @@ InventorAutoSave/
 1. **Clean** — Suppression des artefacts precedents
 2. **Build Release** — `dotnet build -c Release`
 3. **Publish Self-Contained** — `dotnet publish` (exe standalone win-x64, ~130 MB)
-4. **Package dist/** — Copie dans `dist\InventorAutoSave_v2.0\`
+4. **Package dist/** — Copie dans `dist\InventorAutoSave_v1.0.0\`
 5. **Build Setup** — Compile l'installateur avec l'exe embarque
 
 ---

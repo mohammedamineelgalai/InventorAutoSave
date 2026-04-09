@@ -1,0 +1,34 @@
+# EditorConfig — InventorAutoSave
+# https://editorconfig.org
+
+root = true
+
+# All files
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# C# files
+[*.cs]
+indent_size = 4
+
+# XAML files
+[*.xaml]
+indent_size = 4
+
+# JSON files
+[*.json]
+indent_size = 4
+
+# XML / csproj / props files
+[*.{xml,csproj,props,targets}]
+indent_size = 2
+
+# Markdown files — disable all C#/MSBuild diagnostics (false positives on HEX codes)
+[*.md]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none

@@ -26,7 +26,7 @@
 
   <!-- Embarquer InventorAutoSave.exe (construit avant le Setup) -->
   <ItemGroup>
-    <EmbeddedResource Include="..\bin\Release\net8.0-windows\win-x64\publish\InventorAutoSave.exe"
+    <EmbeddedResource Include="..\bin\Release\net8.0-windows\win-x64\InventorAutoSave.exe"
                       LogicalName="InventorAutoSave.exe"/>
   </ItemGroup>
 

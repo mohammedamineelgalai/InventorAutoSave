@@ -4,7 +4,7 @@
     <!-- ═══════════════════════════════════════════════════════════════════════════
          InventorAutoSave - Dark Theme (Palette XNRGY)
          Auteur: Mohammed Amine Elgalai - XNRGY Climate Systems ULC
-         Version: 2.0.0
+         Version: 1.0.0
          
          PALETTE:
          ┌────────────────────────────────────────────────────────┐
@@ -35,8 +35,8 @@
     <Color x:Key="AccentOrangeColor">#FF8C00</Color>
     
     <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
-    <Color x:Key="TextSecondaryColor">#AAAAAA</Color>
-    <Color x:Key="TextMutedColor">#888888</Color>
+    <Color x:Key="TextSecondaryColor">#B8C7D6</Color>
+    <Color x:Key="TextMutedColor">#90CAF9</Color>
     <Color x:Key="TextDisabledColor">#666666</Color>
     
     <!-- Brushes -->

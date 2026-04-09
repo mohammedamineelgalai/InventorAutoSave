@@ -217,4 +217,4 @@ Usage:
 
 ---
 
-*Document technique — InventorAutoSave v2.0.0 — XNRGY Climate Systems ULC*
+*Document technique — InventorAutoSave v1.0.0 — XNRGY Climate Systems ULC*

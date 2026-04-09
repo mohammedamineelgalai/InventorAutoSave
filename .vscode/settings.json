@@ -1,8 +1,28 @@
 {
+    // === C# / Roslyn — pointer vers le .sln classique ===
+    "dotnet.defaultSolution": "InventorAutoSave.sln",
+    "omnisharp.defaultLaunchSolution": "InventorAutoSave.sln",
     "csharp-dev-tools.roslyn.projectOrSolutionFiles": [
-        "c:\\Users\\mohammedamine.elgala\\source\\repos\\InventorAutoSave\\InventorAutoSave.virtual.sln"
+        "c:\\Users\\mohammedamine.elgala\\source\\repos\\InventorAutoSave\\InventorAutoSave.sln"
     ],
     "dotrush.roslyn.projectOrSolutionFiles": [
-        "c:\\Users\\mohammedamine.elgala\\source\\repos\\InventorAutoSave\\InventorAutoSave.csproj"
-    ]
+        "c:\\Users\\mohammedamine.elgala\\source\\repos\\InventorAutoSave\\InventorAutoSave.sln"
+    ],
+
+    // === Exclude build artifacts ===
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true,
+        "**/dist": true
+    },
+    "search.exclude": {
+        "**/bin": true,
+        "**/obj": true,
+        "**/dist": true
+    },
+    "files.watcherExclude": {
+        "**/bin/**": true,
+        "**/obj/**": true,
+        "**/dist/**": true
+    }
 }

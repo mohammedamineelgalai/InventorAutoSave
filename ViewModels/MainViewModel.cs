@@ -15,6 +15,7 @@ namespace InventorAutoSave.ViewModels
         private readonly AutoSaveTimerService _timerService;
         private readonly SettingsService _settingsService;
         private readonly System.Windows.Threading.DispatcherTimer _uiRefreshTimer;
+        private int _uiRefreshCounter; // Pour limiter les appels COM a toutes les 5s
 
         // ═══════════════════════════════════════════════════════════════
         // PROPRIETES OBSERVABLES
@@ -177,13 +178,23 @@ namespace InventorAutoSave.ViewModels
             {
                 if (!IsInventorConnected) IsInventorConnected = true;
 
-                // Mettre a jour nom doc actif et compteurs
-                string? docName = _inventorService.GetActiveDocumentName();
-                ActiveDocumentName = string.IsNullOrEmpty(docName) ? "Aucun document actif" : docName;
+                // Appels COM toutes les 5s seulement (pas chaque seconde)
+                // pour eviter que les RCW temporaires corrompent le canal RPC COM
+                _uiRefreshCounter++;
+                if (_uiRefreshCounter >= 5)
+                {
+                    _uiRefreshCounter = 0;
+                    try
+                    {
+                        string? docName = _inventorService.GetActiveDocumentName();
+                        ActiveDocumentName = string.IsNullOrEmpty(docName) ? "Aucun document actif" : docName;
 
-                var (total, dirty) = _inventorService.GetDocumentCounts();
-                TotalDocuments = total;
-                DirtyDocuments = dirty;
+                        var (total, dirty) = _inventorService.GetDocumentCounts();
+                        TotalDocuments = total;
+                        DirtyDocuments = dirty;
+                    }
+                    catch { }
+                }
             }
 
             // Compte a rebours prochain save
@@ -265,6 +276,7 @@ namespace InventorAutoSave.ViewModels
             {
                 _timerService.ChangeInterval(seconds);
                 _timerStartedAt = DateTime.Now;
+                OnPropertyChanged(nameof(Settings));
                 StatusMessage = $"Intervalle: {AutoSaveTimerService.FormatInterval(seconds)}";
             }
         });
@@ -293,6 +305,19 @@ namespace InventorAutoSave.ViewModels
             _settingsService.Update(s => s.SafetyChecks = !s.SafetyChecks);
             OnPropertyChanged(nameof(Settings));
         });
+
+        // ═══════════════════════════════════════════════════════════════
+        // NOTIFICATION EXTERNE (menu contextuel -> SettingsWindow)
+        // ═══════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Appelée quand les settings sont modifiés depuis le menu contextuel
+        /// pour que la SettingsWindow (si ouverte) se rafraîchisse.
+        /// </summary>
+        public void OnSettingsChangedExternally()
+        {
+            OnPropertyChanged(nameof(Settings));
+        }
 
         // ═══════════════════════════════════════════════════════════════
         // HELPERS

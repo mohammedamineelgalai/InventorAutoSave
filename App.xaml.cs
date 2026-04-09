@@ -33,6 +33,14 @@ namespace InventorAutoSave
         private MenuItem? _miSafetyChecks;
         private MenuItem? _miStartup;
 
+        // Sous-items checkables (pour sync bidirectionnelle avec SettingsWindow)
+        private MenuItem? _miSaveActive;
+        private MenuItem? _miSaveAll;
+        private MenuItem? _miNotifOn;
+        private MenuItem? _miNotifOff;
+        private MenuItem? _miSafeOn;
+        private MenuItem? _miSafeOff;
+
         // ═══════════════════════════════════════════════════════════════
         // STARTUP - avec global exception handlers
         // ═══════════════════════════════════════════════════════════════
@@ -62,7 +70,7 @@ namespace InventorAutoSave
             };
 
             // ── DEMARRAGE ──
-            Logger.Log("[+] InventorAutoSave v2.0 demarre", Logger.LogLevel.INFO);
+            Logger.Log("[+] InventorAutoSave v1.0.0 demarre", Logger.LogLevel.INFO);
 
             try
             {
@@ -106,7 +114,7 @@ namespace InventorAutoSave
         {
             _trayIcon = new TaskbarIcon
             {
-                ToolTipText = "Inventor AutoSave v2.0",
+                ToolTipText = "Inventor AutoSave v1.0.0",
                 Visibility = Visibility.Visible
             };
 
@@ -171,24 +179,24 @@ namespace InventorAutoSave
 
             // ── Mode de sauvegarde (sous-menu) ──
             _miSaveMode = CreateDarkMenuItem("💡  Mode de sauvegarde", darkItemStyle);
-            var miSaveActive = CreateDarkMenuItem("💾  Document actif (recommande)", darkItemStyle);
-            miSaveActive.IsCheckable = true;
-            var miSaveAll = CreateDarkMenuItem("💾  Tous les documents", darkItemStyle);
-            miSaveAll.IsCheckable = true;
-            miSaveActive.IsChecked = _settingsService.Current.SaveMode == SaveMode.SaveActive;
-            miSaveAll.IsChecked = _settingsService.Current.SaveMode == SaveMode.SaveAll;
-            miSaveActive.Click += (s, e) =>
+            _miSaveActive = CreateDarkMenuItem("💾  Document actif (recommande)", darkItemStyle);
+            _miSaveActive.IsCheckable = true;
+            _miSaveAll = CreateDarkMenuItem("💾  Tous les documents", darkItemStyle);
+            _miSaveAll.IsCheckable = true;
+            _miSaveActive.IsChecked = _settingsService.Current.SaveMode == SaveMode.SaveActive;
+            _miSaveAll.IsChecked = _settingsService.Current.SaveMode == SaveMode.SaveAll;
+            _miSaveActive.Click += (s, e) =>
             {
                 _viewModel.ChangeSaveModeCommand.Execute(SaveMode.SaveActive);
-                miSaveActive.IsChecked = true; miSaveAll.IsChecked = false;
+                _miSaveActive.IsChecked = true; _miSaveAll.IsChecked = false;
             };
-            miSaveAll.Click += (s, e) =>
+            _miSaveAll.Click += (s, e) =>
             {
                 _viewModel.ChangeSaveModeCommand.Execute(SaveMode.SaveAll);
-                miSaveAll.IsChecked = true; miSaveActive.IsChecked = false;
+                _miSaveAll.IsChecked = true; _miSaveActive.IsChecked = false;
             };
-            _miSaveMode.Items.Add(miSaveActive);
-            _miSaveMode.Items.Add(miSaveAll);
+            _miSaveMode.Items.Add(_miSaveActive);
+            _miSaveMode.Items.Add(_miSaveAll);
 
             // ── Intervalle (sous-menu) ──
             _miIntervalGroup = CreateDarkMenuItem("⏱️  Intervalle de sauvegarde", darkItemStyle);
@@ -214,45 +222,49 @@ namespace InventorAutoSave
 
             // ── Notifications (sous-menu) ──
             _miNotifications = CreateDarkMenuItem("🔔  Notifications", darkItemStyle);
-            var miNotifOn = CreateDarkMenuItem("✅  Activer", darkItemStyle);
-            miNotifOn.IsCheckable = true;
-            var miNotifOff = CreateDarkMenuItem("❌  Desactiver", darkItemStyle);
-            miNotifOff.IsCheckable = true;
-            miNotifOn.IsChecked = _settingsService.Current.ShowNotifications;
-            miNotifOff.IsChecked = !_settingsService.Current.ShowNotifications;
-            miNotifOn.Click += (s, e) =>
+            _miNotifOn = CreateDarkMenuItem("✅  Activer", darkItemStyle);
+            _miNotifOn.IsCheckable = true;
+            _miNotifOff = CreateDarkMenuItem("❌  Desactiver", darkItemStyle);
+            _miNotifOff.IsCheckable = true;
+            _miNotifOn.IsChecked = _settingsService.Current.ShowNotifications;
+            _miNotifOff.IsChecked = !_settingsService.Current.ShowNotifications;
+            _miNotifOn.Click += (s, e) =>
             {
                 _settingsService.Update(x => x.ShowNotifications = true);
-                miNotifOn.IsChecked = true; miNotifOff.IsChecked = false;
+                _miNotifOn.IsChecked = true; _miNotifOff.IsChecked = false;
+                _viewModel.OnSettingsChangedExternally();
             };
-            miNotifOff.Click += (s, e) =>
+            _miNotifOff.Click += (s, e) =>
             {
                 _settingsService.Update(x => x.ShowNotifications = false);
-                miNotifOff.IsChecked = true; miNotifOn.IsChecked = false;
+                _miNotifOff.IsChecked = true; _miNotifOn.IsChecked = false;
+                _viewModel.OnSettingsChangedExternally();
             };
-            _miNotifications.Items.Add(miNotifOn);
-            _miNotifications.Items.Add(miNotifOff);
+            _miNotifications.Items.Add(_miNotifOn);
+            _miNotifications.Items.Add(_miNotifOff);
 
             // ── Protection calculs ──
             _miSafetyChecks = CreateDarkMenuItem("🛡️  Protection calculs", darkItemStyle);
-            var miSafeOn = CreateDarkMenuItem("✅  Activer", darkItemStyle);
-            miSafeOn.IsCheckable = true;
-            var miSafeOff = CreateDarkMenuItem("❌  Desactiver", darkItemStyle);
-            miSafeOff.IsCheckable = true;
-            miSafeOn.IsChecked = _settingsService.Current.SafetyChecks;
-            miSafeOff.IsChecked = !_settingsService.Current.SafetyChecks;
-            miSafeOn.Click += (s, e) =>
+            _miSafeOn = CreateDarkMenuItem("✅  Activer", darkItemStyle);
+            _miSafeOn.IsCheckable = true;
+            _miSafeOff = CreateDarkMenuItem("❌  Desactiver", darkItemStyle);
+            _miSafeOff.IsCheckable = true;
+            _miSafeOn.IsChecked = _settingsService.Current.SafetyChecks;
+            _miSafeOff.IsChecked = !_settingsService.Current.SafetyChecks;
+            _miSafeOn.Click += (s, e) =>
             {
                 _settingsService.Update(x => x.SafetyChecks = true);
-                miSafeOn.IsChecked = true; miSafeOff.IsChecked = false;
+                _miSafeOn.IsChecked = true; _miSafeOff.IsChecked = false;
+                _viewModel.OnSettingsChangedExternally();
             };
-            miSafeOff.Click += (s, e) =>
+            _miSafeOff.Click += (s, e) =>
             {
                 _settingsService.Update(x => x.SafetyChecks = false);
-                miSafeOff.IsChecked = true; miSafeOn.IsChecked = false;
+                _miSafeOff.IsChecked = true; _miSafeOn.IsChecked = false;
+                _viewModel.OnSettingsChangedExternally();
             };
-            _miSafetyChecks.Items.Add(miSafeOn);
-            _miSafetyChecks.Items.Add(miSafeOff);
+            _miSafetyChecks.Items.Add(_miSafeOn);
+            _miSafetyChecks.Items.Add(_miSafeOff);
 
             // ── Demarrer avec Windows ──
             _miStartup = CreateDarkMenuItem("", darkItemStyle);
@@ -311,6 +323,10 @@ namespace InventorAutoSave
             menu.Items.Add(sep3);
             menu.Items.Add(miQuit);
 
+            // Synchroniser l'etat du menu a chaque ouverture
+            // (rattrape les changements faits via la fenetre Settings)
+            menu.Opened += (s, e) => RefreshContextMenuState();
+
             return menu;
         }
 
@@ -335,8 +351,57 @@ namespace InventorAutoSave
         {
             if (_miStartup == null) return;
             _miStartup.Header = _miStartup.IsChecked
-                ? "🚀  Demarrer avec Windows  ✅"
-                : "🚀  Demarrer avec Windows";
+                ? "✅  Demarrer avec Windows"
+                : "⚙️  Demarrer avec Windows";
+        }
+
+        /// <summary>
+        /// Synchronise l'état de tous les éléments du menu contextuel
+        /// avec les settings actuels. Appelée quand le menu s'ouvre
+        /// et quand la fenêtre Settings se ferme.
+        /// </summary>
+        private void RefreshContextMenuState()
+        {
+            try
+            {
+                var s = _settingsService.Current;
+
+                // Toggle AutoSave
+                UpdateToggleMenuText();
+
+                // Mode de sauvegarde
+                if (_miSaveActive != null) _miSaveActive.IsChecked = (s.SaveMode == SaveMode.SaveActive);
+                if (_miSaveAll != null) _miSaveAll.IsChecked = (s.SaveMode == SaveMode.SaveAll);
+
+                // Intervalle
+                if (_miIntervalGroup != null)
+                {
+                    foreach (MenuItem item in _miIntervalGroup.Items)
+                    {
+                        if (item.Tag is int t)
+                            item.IsChecked = (t == s.SaveIntervalSeconds);
+                    }
+                }
+
+                // Notifications
+                if (_miNotifOn != null) _miNotifOn.IsChecked = s.ShowNotifications;
+                if (_miNotifOff != null) _miNotifOff.IsChecked = !s.ShowNotifications;
+
+                // Protection calculs
+                if (_miSafeOn != null) _miSafeOn.IsChecked = s.SafetyChecks;
+                if (_miSafeOff != null) _miSafeOff.IsChecked = !s.SafetyChecks;
+
+                // Demarrage avec Windows
+                if (_miStartup != null)
+                {
+                    _miStartup.IsChecked = s.StartWithWindows;
+                    UpdateStartupMenuText();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"[!] RefreshContextMenuState: {ex.Message}", Logger.LogLevel.WARNING);
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -378,6 +443,7 @@ namespace InventorAutoSave
                 _settingsWindow.Closed += (s, e) =>
                 {
                     _settingsWindow = null;
+                    RefreshContextMenuState(); // Sync menu contextuel avec les changements
                     Logger.Log("[i] Fenetre Settings fermee", Logger.LogLevel.DEBUG);
                 };
 

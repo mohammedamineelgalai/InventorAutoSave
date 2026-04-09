@@ -326,7 +326,16 @@ namespace InventorAutoSave.Services
                 {
                     object? doc = ComInvoke.GetProp(_inventorApp, "ActiveDocument");
                     if (doc != null)
-                        return ComInvoke.GetString(doc, "DisplayName");
+                    {
+                        try
+                        {
+                            return ComInvoke.GetString(doc, "DisplayName");
+                        }
+                        finally
+                        {
+                            Marshal.ReleaseComObject(doc);
+                        }
+                    }
                 }
             }
             catch { }
@@ -363,18 +372,30 @@ namespace InventorAutoSave.Services
                 object? docs = ComInvoke.GetProp(_inventorApp, "Documents");
                 if (docs == null) return (0, 0);
 
-                int total = ComInvoke.GetInt(docs, "Count");
-                int dirty = 0;
-                for (int i = 1; i <= total; i++)
+                try
                 {
-                    try
+                    int total = ComInvoke.GetInt(docs, "Count");
+                    int dirty = 0;
+                    for (int i = 1; i <= total; i++)
                     {
-                        object? doc = ComInvoke.GetItem(docs, i);
-                        if (doc != null && ComInvoke.GetBool(doc, "Dirty")) dirty++;
+                        object? doc = null;
+                        try
+                        {
+                            doc = ComInvoke.GetItem(docs, i);
+                            if (doc != null && ComInvoke.GetBool(doc, "Dirty")) dirty++;
+                        }
+                        catch { }
+                        finally
+                        {
+                            if (doc != null) try { Marshal.ReleaseComObject(doc); } catch { }
+                        }
                     }
-                    catch { }
+                    return (total, dirty);
                 }
-                return (total, dirty);
+                finally
+                {
+                    Marshal.ReleaseComObject(docs);
+                }
             }
             catch { return (0, 0); }
         }
