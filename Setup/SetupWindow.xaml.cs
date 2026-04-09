@@ -15,7 +15,7 @@ namespace InventorAutoSave.Setup
         // ═══════════════════════════════════════════════════════════════
 
         private const string APP_NAME    = "InventorAutoSave";
-        private const string APP_VERSION = "2.0.0";
+        private const string APP_VERSION = "1.0.0";
         private const string EXE_NAME    = "InventorAutoSave.exe";
         private const string SHORTCUT_NAME = "InventorAutoSave.lnk";
 
@@ -32,10 +32,6 @@ namespace InventorAutoSave.Setup
         private static readonly string StartMenuDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
             "Programs", "XNRGY");
-
-        // Dossier de l'exe Setup (contient InventorAutoSave.exe a cote)
-        private static readonly string SetupDir =
-            AppDomain.CurrentDomain.BaseDirectory;
 
         // Etat
         private bool _installDone = false;
@@ -147,47 +143,36 @@ namespace InventorAutoSave.Setup
                 Log("[+] Dossier cree: " + InstallDir);
                 SetStep(1, "ok");
 
-                // ── ETAPE 2: Copier les fichiers ──
+                // ── ETAPE 2: Extraire et installer les fichiers ──
                 SetStep(2, "en cours");
                 SetProgress(30);
 
-                string sourceExe = FindSourceExe();
-                if (string.IsNullOrEmpty(sourceExe) || !File.Exists(sourceExe))
-                {
-                    Log("[-] InventorAutoSave.exe introuvable. Cherche dans: " + SetupDir);
-                    Log("[!] Assurez-vous que InventorAutoSave.exe est a cote de ce Setup.exe");
-                    ShowError($"Fichier source introuvable: {EXE_NAME}\n\nEmplacement attendu: {SetupDir}");
-                    return false;
-                }
-
-                // Copier l'exe principal
+                // Extraire InventorAutoSave.exe depuis la ressource embarquee
                 string destExe = Path.Combine(InstallDir, EXE_NAME);
-                Log("[>] Copie: " + EXE_NAME);
-                File.Copy(sourceExe, destExe, overwrite: true);
+                Log("[>] Extraction: " + EXE_NAME + " (ressource embarquee)");
 
-                // Copier config.json si present (settings par defaut)
-                string sourceConfig = Path.Combine(Path.GetDirectoryName(sourceExe)!, "config.json");
-                string destConfig   = Path.Combine(InstallDir, "config.json");
-                if (File.Exists(sourceConfig) && !File.Exists(destConfig))
+                var assembly = Assembly.GetExecutingAssembly();
+                using (var resourceStream = assembly.GetManifestResourceStream(EXE_NAME))
                 {
-                    File.Copy(sourceConfig, destConfig);
-                    Log("[>] Copie: config.json (settings par defaut)");
-                }
-
-                // Copier Resources/InventorAutoSave.ico si present
-                string sourceIcoDir = Path.Combine(Path.GetDirectoryName(sourceExe)!, "Resources");
-                string destIcoDir   = Path.Combine(InstallDir, "Resources");
-                if (Directory.Exists(sourceIcoDir))
-                {
-                    Directory.CreateDirectory(destIcoDir);
-                    foreach (var ico in Directory.GetFiles(sourceIcoDir, "*.ico"))
+                    if (resourceStream == null)
                     {
-                        File.Copy(ico, Path.Combine(destIcoDir, Path.GetFileName(ico)), overwrite: true);
-                        Log("[>] Copie: Resources\\" + Path.GetFileName(ico));
+                        ShowError($"Ressource embarquee introuvable: {EXE_NAME}\n\nLe Setup.exe est corrompu ou mal compile.");
+                        return false;
                     }
+                    using var fileStream = new FileStream(destExe, FileMode.Create, FileAccess.Write);
+                    resourceStream.CopyTo(fileStream);
                 }
 
-                Log("[+] Fichiers copies dans: " + InstallDir);
+                // Creer config.json par defaut si absent
+                string destConfig = Path.Combine(InstallDir, "config.json");
+                if (!File.Exists(destConfig))
+                {
+                    File.WriteAllText(destConfig,
+                        "{\n  \"IntervalSeconds\": 300,\n  \"SaveMode\": \"Active\",\n  \"ShowNotifications\": false,\n  \"StartWithWindows\": true\n}");
+                    Log("[>] config.json cree (parametres par defaut)");
+                }
+
+                Log("[+] Fichiers installes dans: " + InstallDir);
                 SetStep(2, "ok");
                 SetProgress(55);
 
@@ -335,27 +320,6 @@ namespace InventorAutoSave.Setup
             {
                 Marshal.ReleaseComObject(shell);
             }
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // HELPER: TROUVER L'EXE SOURCE
-        // ═══════════════════════════════════════════════════════════════
-
-        private static string FindSourceExe()
-        {
-            // Chercher a cote du Setup.exe
-            string candidate1 = Path.Combine(SetupDir, EXE_NAME);
-            if (File.Exists(candidate1)) return candidate1;
-
-            // Chercher dans le dossier parent (structure dist\)
-            string? parentDir = Path.GetDirectoryName(SetupDir.TrimEnd('\\', '/'));
-            if (parentDir != null)
-            {
-                string candidate2 = Path.Combine(parentDir, EXE_NAME);
-                if (File.Exists(candidate2)) return candidate2;
-            }
-
-            return string.Empty;
         }
 
         // ═══════════════════════════════════════════════════════════════

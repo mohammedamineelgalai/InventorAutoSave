@@ -25,13 +25,13 @@ $ErrorActionPreference = "Stop"
 # ============================================================
 # CONFIGURATION
 # ============================================================
-$VERSION       = "2.0.0"
+$VERSION       = "1.0.0"
 $APP_NAME      = "InventorAutoSave"
 $COMPANY       = "XNRGY Climate Systems ULC"
 $MAIN_PROJECT  = Join-Path $PSScriptRoot "$APP_NAME.csproj"
 $SETUP_PROJECT = Join-Path $PSScriptRoot "Setup\InventorAutoSave.Setup.csproj"
 $DIST_DIR      = Join-Path $PSScriptRoot "dist\${APP_NAME}_v${VERSION}"
-$PUBLISH_DIR   = Join-Path $PSScriptRoot "bin\Publish"
+$PUBLISH_DIR   = Join-Path $PSScriptRoot "bin\Release\net8.0-windows\win-x64\publish"
 
 # ============================================================
 # FONCTIONS UTILITAIRES
@@ -113,12 +113,12 @@ if ($Quick) {
 }
 
 # ============================================================
-# NIVEAU 3 - PUBLISH SELF-CONTAINED
+# NIVEAU 3 - PUBLISH SELF-CONTAINED (dans bin\Release directement)
 # ============================================================
 Write-Header "NIVEAU 3 - Publish Self-Contained (x64)"
 
-Write-Step "Publication standalone (pas de .NET requis sur le PC cible)..."
-Write-Info "Target: win-x64, SingleFile, trimmed"
+Write-Step "Publication standalone (un seul .exe, pas de .NET requis)..."
+Write-Info "Target: win-x64, SingleFile"
 
 $publishOutput = dotnet publish $MAIN_PROJECT `
     -c Release `
@@ -127,7 +127,6 @@ $publishOutput = dotnet publish $MAIN_PROJECT `
     -p:PublishSingleFile=true `
     -p:IncludeNativeLibrariesForSelfExtract=true `
     -p:EnableCompressionInSingleFile=true `
-    -o $PUBLISH_DIR `
     --nologo 2>&1
 
 $publishExitCode = $LASTEXITCODE
@@ -220,28 +219,38 @@ Get-ChildItem $DIST_DIR -Recurse | ForEach-Object {
 # NIVEAU 5 - BUILD INSTALLATEUR (si present)
 # ============================================================
 if (-not $SkipSetup) {
-    Write-Header "NIVEAU 5 - Build Installateur"
+    Write-Header "NIVEAU 5 - Build Installateur (SingleFile embarque)"
 
     if (Test-Path $SETUP_PROJECT) {
-        Write-Step "Compilation de InventorAutoSave.Setup.exe..."
+        Write-Step "Publication de InventorAutoSave.Setup.exe (tout embarque)..."
+        Write-Info "L'exe principal est embarque via EmbeddedResource dans le Setup"
 
-        $setupOutput = dotnet build $SETUP_PROJECT -c Release --nologo 2>&1
+        $setupPublishDir = Join-Path $PSScriptRoot "Setup\bin\Release\net8.0-windows\win-x64\publish"
+
+        $setupOutput = dotnet publish $SETUP_PROJECT `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            --nologo 2>&1
+
         $setupErrors = $setupOutput | Where-Object { $_ -match ": error" }
 
         if ($setupErrors.Count -gt 0) {
             Write-Fail "Erreurs Setup (non bloquant - app principale OK):"
             $setupErrors | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkYellow }
         } else {
-            # Copier le Setup.exe dans dist/
-            $setupExe = Get-ChildItem (Join-Path $PSScriptRoot "Setup\bin\Release") -Filter "*.exe" -Recurse | Select-Object -First 1
-            if ($setupExe) {
-                Copy-Item $setupExe.FullName $DIST_DIR
-                Write-OK "Setup.exe copie dans dist\"
+            $setupExe = Join-Path $setupPublishDir "InventorAutoSave.Setup.exe"
+            if (Test-Path $setupExe) {
+                Copy-Item $setupExe $DIST_DIR -Force
+                $setupSize = [math]::Round((Get-Item $setupExe).Length / 1MB, 1)
+                Write-OK "Setup.exe copie dans dist\ ($setupSize MB) - tout embarque!"
             }
         }
     } else {
-        Write-Info "Projet Setup non trouve (Setup\InventorAutoSave.Setup.csproj)"
-        Write-Info "Utiliser -SkipSetup pour ignorer cette etape"
+        Write-Info "Projet Setup non trouve - utiliser -SkipSetup pour ignorer"
     }
 }
 

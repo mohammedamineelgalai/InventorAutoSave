@@ -115,11 +115,11 @@ namespace InventorAutoSave.ViewModels
                 App.Current.Dispatcher.Invoke(() => { IsInventorConnected = false; ActiveDocumentName = "Aucun document"; TotalDocuments = 0; DirtyDocuments = 0; });
 
             _timerService.SaveCompleted += (s, e) =>
-                App.Current.Dispatcher.Invoke(() => OnSaveCompleted(e));
+                App.Current.Dispatcher.BeginInvoke(() => OnSaveCompleted(e));
             _timerService.StatusChanged += (s, msg) =>
-                App.Current.Dispatcher.Invoke(() => StatusMessage = msg);
+                App.Current.Dispatcher.BeginInvoke(() => StatusMessage = msg);
             _timerService.TimerTick += (s, e) =>
-                App.Current.Dispatcher.Invoke(() => _timerStartedAt = DateTime.Now);
+                App.Current.Dispatcher.BeginInvoke(() => _timerStartedAt = DateTime.Now);
 
             // Timer UI: refresh toutes les secondes (compte a rebours, nom doc actif, etc.)
             _uiRefreshTimer = new System.Windows.Threading.DispatcherTimer
@@ -137,8 +137,15 @@ namespace InventorAutoSave.ViewModels
         {
             await Task.Delay(500); // Laisser l'UI s'initialiser
 
-            // Tentative de connexion initiale
-            bool connected = _inventorService.TryConnect();
+            // Tentative de connexion initiale - DOIT etre sur le thread UI (STA)
+            // car les objets COM Inventor sont STA et doivent etre crees/accedes
+            // depuis un thread STA pour que Type.InvokeMember fonctionne.
+            bool connected = false;
+            await App.Current.Dispatcher.InvokeAsync(() =>
+            {
+                connected = _inventorService.TryConnect();
+            });
+
             App.Current.Dispatcher.Invoke(() =>
             {
                 IsInventorConnected = connected;
@@ -223,16 +230,12 @@ namespace InventorAutoSave.ViewModels
         private ICommand? _saveNowCommand;
         public ICommand SaveNowCommand => _saveNowCommand ??= new RelayCommand(_ =>
         {
-            Task.Run(() =>
-            {
-                var result = _timerService.TriggerSave();
-                App.Current.Dispatcher.Invoke(() =>
-                {
-                    StatusMessage = result.Success
-                        ? $"[+] {result.Summary}"
-                        : $"[-] {result.ErrorMessage ?? "Erreur inconnue"}";
-                });
-            });
+            // SaveNow est deja sur le thread UI (appele depuis l'UI),
+            // donc les appels COM seront sur le thread STA.
+            var result = _timerService.TriggerSave();
+            StatusMessage = result.Success
+                ? $"[+] {result.Summary}"
+                : $"[-] {result.ErrorMessage ?? "Erreur inconnue"}";
         });
 
         private ICommand? _toggleAutoSaveCommand;

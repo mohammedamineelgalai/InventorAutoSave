@@ -1,143 +1,20 @@
 <Window x:Class="InventorAutoSave.Views.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Inventor AutoSave - Configuration"
-        Width="560" Height="680"
-        MinWidth="480" MinHeight="580"
+        Title="Inventor AutoSave — Configuration — v2.0.0 — By Mohammed Amine Elgalai — XNRGY CLIMATE SYSTEMS ULC"
+        Width="580" Height="700"
+        MinWidth="500" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Background="#12121C"
         ResizeMode="CanResize"
         ShowInTaskbar="True"
         Icon="/Resources/InventorAutoSave.ico">
 
-    <Window.Resources>
-
-        <!-- Couleurs -->
-        <SolidColorBrush x:Key="HeaderBg"    Color="#1E1E2E"/>
-        <SolidColorBrush x:Key="SectionBg"   Color="#2A2A3E"/>
-        <SolidColorBrush x:Key="CardBg"       Color="#252538"/>
-        <SolidColorBrush x:Key="BorderColor"  Color="#4A7FBF"/>
-        <SolidColorBrush x:Key="TextPrimary"  Color="White"/>
-        <SolidColorBrush x:Key="TextSecond"   Color="#AAAAAA"/>
-        <SolidColorBrush x:Key="AccentBlue"   Color="#0078D4"/>
-        <SolidColorBrush x:Key="GreenConn"    Color="#107C10"/>
-        <SolidColorBrush x:Key="RedDisconn"   Color="#E81123"/>
-
-        <!-- Style Section -->
-        <Style x:Key="SectionHeader" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#90CAF9"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,0,6"/>
-        </Style>
-
-        <!-- Style Card -->
-        <Style x:Key="Card" TargetType="Border">
-            <Setter Property="Background" Value="#252538"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="14,10"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
-            <Setter Property="BorderBrush" Value="#4A7FBF"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>
-
-        <!-- Style bouton principal -->
-        <Style x:Key="PrimaryBtn" TargetType="Button">
-            <Setter Property="Background" Value="#0078D4"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="14,7"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#106EBE"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#005A9E"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Bouton interval -->
-        <Style x:Key="IntervalBtn" TargetType="Button">
-            <Setter Property="Background" Value="#2A2A3E"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="BorderBrush" Value="#4A7FBF"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="Margin" Value="0,0,5,5"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="5" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#3A3A5E"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#60A0EF"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#0078D4"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Toggle style (CheckBox sans checkbox) -->
-        <Style x:Key="ToggleBtn" TargetType="ToggleButton">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Padding" Value="12,6"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ToggleButton">
-                        <Border x:Name="Bd" Background="#2A2A3E" BorderBrush="#4A7FBF"
-                                BorderThickness="1" CornerRadius="5" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#107C10"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#20B020"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#3A3A5E"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-    </Window.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>   <!-- Header -->
-            <RowDefinition Height="*"/>      <!-- Contenu -->
-            <RowDefinition Height="Auto"/>   <!-- Footer -->
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- ═══════════════════════════════════════════════════════ -->
@@ -150,16 +27,15 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Titre -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="⚙️" Foreground="White" FontSize="22" VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <StackPanel>
                         <TextBlock Text="Inventor AutoSave" Foreground="White" FontSize="16" FontWeight="Bold"/>
-                        <TextBlock Text="Smart Tools Amine v2.0" Foreground="#90CAF9" FontSize="11"/>
+                        <TextBlock Text="Smart Tools Amine v2.0 — XNRGY" Foreground="#90CAF9" FontSize="11"/>
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Status Inventor (haut droite) -->
+                <!-- Status Inventor -->
                 <Border Grid.Column="1" Background="#252538" CornerRadius="6" Padding="12,6"
                         BorderBrush="#4A7FBF" BorderThickness="1">
                     <StackPanel Orientation="Horizontal">
@@ -193,17 +69,14 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Document actif -->
                         <TextBlock Grid.Column="0" Grid.Row="0" Text="Document actif:" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,4"/>
                         <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding ActiveDocumentName}"
                                    Foreground="White" FontSize="11" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,0,0,4"/>
 
-                        <!-- Documents -->
                         <TextBlock Grid.Column="0" Grid.Row="1" Text="Documents:" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,4"/>
                         <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding DocumentsStatusText}"
                                    Foreground="White" FontSize="11" Margin="0,0,0,4"/>
 
-                        <!-- Prochain save -->
                         <TextBlock Grid.Column="0" Grid.Row="2" Text="Prochain save:" Foreground="#AAAAAA" FontSize="11"/>
                         <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal">
                             <TextBlock Text="⏱️ " Foreground="White" FontSize="11"/>
@@ -231,7 +104,7 @@
                         <Button Grid.Column="1" Content="{Binding AutoSaveButtonText}"
                                 Command="{Binding ToggleAutoSaveCommand}"
                                 Background="{Binding AutoSaveButtonColor}"
-                                Style="{StaticResource PrimaryBtn}"
+                                Style="{StaticResource XnrgyPrimaryButton}"
                                 VerticalAlignment="Center" MinWidth="120"/>
                     </Grid>
                 </Border>
@@ -252,7 +125,7 @@
                         <Button Grid.Column="1" Content="💾 Sauvegarder"
                                 Command="{Binding SaveNowCommand}"
                                 Background="#107C10"
-                                Style="{StaticResource PrimaryBtn}"
+                                Style="{StaticResource XnrgyPrimaryButton}"
                                 VerticalAlignment="Center" MinWidth="130"/>
                     </Grid>
                 </Border>
@@ -261,13 +134,13 @@
                 <TextBlock Text="💡 MODE DE SAUVEGARDE" Style="{StaticResource SectionHeader}" Margin="0,8,0,6"/>
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
-                        <TextBlock Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,10">
-                            <Run Text="SaveActive"/>
-                            <Run Text=" = document actif uniquement (plus rapide, sans popup)"/>
+                        <TextBlock Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,6" TextWrapping="Wrap">
+                            <Run Text="SaveActive" FontWeight="SemiBold" Foreground="#00D4FF"/>
+                            <Run Text=" = document actif + composants modifies (rapide, sans popup)"/>
                         </TextBlock>
-                        <TextBlock Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,10">
-                            <Run Text="SaveAll"/>
-                            <Run Text=" = tous les documents (ipt → iam → idw, silencieux via API COM)"/>
+                        <TextBlock Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,10" TextWrapping="Wrap">
+                            <Run Text="SaveAll" FontWeight="SemiBold" Foreground="#FFB74D"/>
+                            <Run Text=" = tous les documents ouverts (ipt → iam → idw, silencieux via API COM)"/>
                         </TextBlock>
                         <StackPanel Orientation="Horizontal">
                             <ToggleButton x:Name="TglSaveActive" Content="💾 Document actif"
@@ -309,33 +182,42 @@
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <!-- Notifications -->
-                        <Grid Margin="0,0,0,10">
+                        <Grid Margin="0,0,0,14">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="🔔 Notifications tray" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
                                 <TextBlock Text="Afficher une notification apres chaque sauvegarde" Foreground="#AAAAAA" FontSize="10" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <ToggleButton x:Name="TglNotifications" Grid.Column="1" Width="60" Height="26"
-                                          Style="{StaticResource ToggleBtn}"
+                            <TextBlock x:Name="TxtNotifStatus" Grid.Column="1" Foreground="#00D26A" FontSize="11"
+                                       FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <ToggleButton x:Name="TglNotifications" Grid.Column="2"
+                                          Style="{StaticResource ToggleSwitch}"
                                           Click="TglNotifications_Click"
                                           VerticalAlignment="Center"/>
                         </Grid>
+
+                        <!-- Separator -->
+                        <Border Height="1" Background="#3A3A54" Margin="0,0,0,14"/>
 
                         <!-- Protection calculs -->
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="🛡️ Protection calculs" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
                                 <TextBlock Text="Differer la sauvegarde si Inventor est en calcul" Foreground="#AAAAAA" FontSize="10" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <ToggleButton x:Name="TglSafetyChecks" Grid.Column="1" Width="60" Height="26"
-                                          Style="{StaticResource ToggleBtn}"
+                            <TextBlock x:Name="TxtSafetyStatus" Grid.Column="1" Foreground="#00D26A" FontSize="11"
+                                       FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <ToggleButton x:Name="TglSafetyChecks" Grid.Column="2"
+                                          Style="{StaticResource ToggleSwitch}"
                                           Click="TglSafetyChecks_Click"
                                           VerticalAlignment="Center"/>
                         </Grid>
@@ -348,12 +230,12 @@
         <!-- ═══════════════════════════════════════════════════════ -->
         <!-- FOOTER                                                  -->
         <!-- ═══════════════════════════════════════════════════════ -->
-        <Border Grid.Row="2" Background="#1E1E2E" Padding="16,10">
+        <Border Grid.Row="2" Background="#252536" Padding="16,8">
             <Grid>
-                <TextBlock HorizontalAlignment="Left" Foreground="#666666" FontSize="10"
-                           Text="© 2026 Mohammed Amine Elgalai - XNRGY Climate Systems ULC"
+                <TextBlock HorizontalAlignment="Left" Foreground="#FFFFFF" FontSize="10" FontWeight="Bold"
+                           Text="© 2026 Mohammed Amine Elgalai — XNRGY Climate Systems ULC"
                            VerticalAlignment="Center"/>
-                <TextBlock HorizontalAlignment="Right" Foreground="#666666" FontSize="10"
+                <TextBlock HorizontalAlignment="Right" Foreground="#888888" FontSize="10"
                            Text="v2.0.0 | .NET 8 | API COM Inventor"
                            VerticalAlignment="Center"/>
             </Grid>

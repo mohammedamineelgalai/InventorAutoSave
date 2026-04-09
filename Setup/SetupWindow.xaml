@@ -70,7 +70,7 @@
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="22,2"/>
+            <Setter Property="Padding" Value="22,5"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -101,7 +101,7 @@
             <Setter Property="Background" Value="#7f1d1d"/>
             <Setter Property="Foreground" Value="#fca5a5"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Padding" Value="18,2"/>
+            <Setter Property="Padding" Value="18,5"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="#ef4444"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -401,12 +401,19 @@
                 <!-- ─── PANEL 3 : SUCCES ─── -->
                 <StackPanel x:Name="PanelSuccess" Margin="22,20,22,10"
                             Visibility="Collapsed" HorizontalAlignment="Center">
-                    <TextBlock Text="&#x2705;" FontSize="52" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                    <!-- Icone succes : cercle vert avec checkmark -->
+                    <Border Background="#14532d" CornerRadius="40"
+                            Width="80" Height="80" HorizontalAlignment="Center"
+                            BorderBrush="#4ade80" BorderThickness="3" Margin="0,0,0,16">
+                        <TextBlock Text="&#x2714;" FontSize="38" FontWeight="Bold"
+                                   Foreground="#4ade80"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
                     <TextBlock Text="Installation terminee avec succes !"
                                Foreground="White" FontSize="18" FontWeight="Bold"
                                HorizontalAlignment="Center" Margin="0,0,0,6"/>
                     <TextBlock Text="InventorAutoSave est pret a l'utilisation"
-                               Foreground="#9ca3af" FontSize="12"
+                               Foreground="#4ade80" FontSize="12"
                                HorizontalAlignment="Center" Margin="0,0,0,20"/>
                     <Border Style="{StaticResource FeatureCardStyle}" MaxWidth="450">
                         <StackPanel>
@@ -415,10 +422,10 @@
                             <TextBlock x:Name="TxtSuccessInfo3" Style="{StaticResource FeatureItemStyle}" Margin="0,2"/>
                         </StackPanel>
                     </Border>
-                    <Border Background="#1e3a5f" CornerRadius="8" Padding="16,12"
-                            BorderBrush="#4cc9f0" BorderThickness="1"
+                    <Border Background="#0f2d1a" CornerRadius="8" Padding="16,12"
+                            BorderBrush="#4ade80" BorderThickness="1"
                             Margin="0,10,0,0" MaxWidth="450">
-                        <TextBlock TextWrapping="Wrap" Foreground="#e0e0e0" FontSize="12"
+                        <TextBlock TextWrapping="Wrap" Foreground="White" FontSize="12"
                                    HorizontalAlignment="Center" TextAlignment="Center">
                             <Run Text="L'application est dans la barre de notification Windows."/>
                             <LineBreak/>

@@ -1,4 +1,5 @@
 using System.Timers;
+using System.Windows;
 using InventorAutoSave.Models;
 
 namespace InventorAutoSave.Services
@@ -10,8 +11,10 @@ namespace InventorAutoSave.Services
     /// Chaque restart du script remettait l'intervalle a la valeur hardcodee (180s).
     /// Ici, l'intervalle est lu depuis config.json AU DEMARRAGE et persiste a chaque changement.
     ///
-    /// Ce service utilise System.Timers.Timer (thread-safe) plutot que DispatcherTimer
-    /// car les sauvegardes COM peuvent etre longues et ne doivent pas bloquer l'UI.
+    /// CORRECTION BUG COM THREADING: Les appels COM vers Inventor (serveur STA) doivent
+    /// etre effectues depuis un thread STA. System.Timers.Timer fire sur le ThreadPool (MTA)
+    /// ce qui cause des MissingMethodException sur les appels Type.InvokeMember.
+    /// Solution: marshaller TriggerSave sur le thread UI (STA) via Dispatcher.Invoke.
     /// </summary>
     public class AutoSaveTimerService : IDisposable
     {
@@ -105,7 +108,14 @@ namespace InventorAutoSave.Services
 
         private void OnTimerElapsed(object? sender, ElapsedEventArgs e)
         {
-            TimerTick?.Invoke(this, EventArgs.Empty);
+            try
+            {
+                TimerTick?.Invoke(this, EventArgs.Empty);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"[!] TimerTick event erreur: {ex.Message}", Logger.LogLevel.DEBUG);
+            }
 
             // Eviter les sauvegardes concurrentes
             if (_isSaving)
@@ -114,7 +124,24 @@ namespace InventorAutoSave.Services
                 return;
             }
 
-            TriggerSave();
+            try
+            {
+                // IMPORTANT: Les appels COM vers Inventor (STA) doivent etre sur le thread UI (STA).
+                // System.Timers.Timer fire sur le ThreadPool (MTA), donc on marshalle via Dispatcher.
+                var dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher != null && !dispatcher.CheckAccess())
+                {
+                    dispatcher.Invoke(() => TriggerSave());
+                }
+                else
+                {
+                    TriggerSave();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"[!] OnTimerElapsed erreur non geree: {ex.Message}", Logger.LogLevel.ERROR);
+            }
         }
 
         /// <summary>
@@ -154,11 +181,15 @@ namespace InventorAutoSave.Services
                 // SAUVEGARDE SILENCIEUSE VIA API COM
                 var result = _inventorService.Save(_settingsService.Current.SaveMode);
 
-                if (result.Success)
+                if (result.Success && result.DocumentsSaved > 0)
                 {
                     _lastSaveTime = DateTime.Now;
                     StopRetryTimer();
                     _pendingRetryCount = 0;
+                }
+                else if (result.Success && result.DocumentsSaved == 0)
+                {
+                    Logger.Log("[~] AutoSave: rien a sauvegarder", Logger.LogLevel.DEBUG);
                 }
 
                 SaveCompleted?.Invoke(this, result);
@@ -201,6 +232,20 @@ namespace InventorAutoSave.Services
 
             if (!_inventorService.IsConnected) return;
 
+            // Marshal sur le thread UI (STA) pour les appels COM
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher != null && !dispatcher.CheckAccess())
+            {
+                dispatcher.Invoke(() => OnRetryElapsedCore());
+            }
+            else
+            {
+                OnRetryElapsedCore();
+            }
+        }
+
+        private void OnRetryElapsedCore()
+        {
             if (_inventorService.IsInventorCalculating())
             {
                 // Max 60 retries (~5 min), puis forcer quand meme
