@@ -1,28 +1,36 @@
 {
-    // === C# / Roslyn — pointer vers le .sln classique ===
+    // === C# / Roslyn — charger la solution ===
     "dotnet.defaultSolution": "InventorAutoSave.sln",
-    "omnisharp.defaultLaunchSolution": "InventorAutoSave.sln",
-    "csharp-dev-tools.roslyn.projectOrSolutionFiles": [
-        "c:\\Users\\mohammedamine.elgala\\source\\repos\\InventorAutoSave\\InventorAutoSave.sln"
-    ],
-    "dotrush.roslyn.projectOrSolutionFiles": [
-        "c:\\Users\\mohammedamine.elgala\\source\\repos\\InventorAutoSave\\InventorAutoSave.sln"
-    ],
 
-    // === Exclude build artifacts ===
+    // === Forcer le language server C# a utiliser Release (pas Debug) ===
+    // Evite la creation de obj\Debug qui cause des Duplicate AssemblyInfo
+    "omnisharp.defaultLaunchSolution": "InventorAutoSave.sln",
+    "omnisharp.projectLoadTimeout": 60,
+    "csharp.buildConfiguration": "Release",
+
+    // === Desactiver csharp-dev-tools Roslyn (evite double analyse = Duplicate AssemblyInfo) ===
+    "csharp-dev-tools.roslyn.enabled": false,
+
+    // === Exclude build artifacts from ALL analysis ===
     "files.exclude": {
         "**/bin": true,
         "**/obj": true,
-        "**/dist": true
+        "**/dist": true,
+        "**/publish": true
     },
     "search.exclude": {
         "**/bin": true,
         "**/obj": true,
-        "**/dist": true
+        "**/dist": true,
+        "**/publish": true
     },
     "files.watcherExclude": {
         "**/bin/**": true,
         "**/obj/**": true,
-        "**/dist/**": true
-    }
+        "**/dist/**": true,
+        "**/publish/**": true
+    },
+    "csharp-dev-tools.roslyn.projectOrSolutionFiles": [
+        "c:\\Users\\mohammedamine.elgala\\source\\repos\\InventorAutoSave\\InventorAutoSave.sln"
+    ]
 }

@@ -1,6 +1,9 @@
+using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Threading;
 using InventorAutoSave.Models;
 using InventorAutoSave.Services;
 
@@ -77,6 +80,13 @@ namespace InventorAutoSave.ViewModels
             set { _nextSaveText = value; OnPropertyChanged(); }
         }
 
+        private bool _isActiveDocumentDirty;
+        public bool IsActiveDocumentDirty
+        {
+            get => _isActiveDocumentDirty;
+            set { _isActiveDocumentDirty = value; OnPropertyChanged(); OnPropertyChanged(nameof(ActiveDocSaveStatus)); OnPropertyChanged(nameof(ActiveDocSaveStatusColor)); }
+        }
+
         // Proprietes calculees (pas de setter, juste OnPropertyChanged)
         public string InventorStatusText => IsInventorConnected ? "Inventor : Connecte" : "Inventor : Deconnecte";
         public string InventorStatusColor => IsInventorConnected ? "#107C10" : "#E81123";
@@ -85,6 +95,10 @@ namespace InventorAutoSave.ViewModels
         public string DocumentsStatusText => IsInventorConnected
             ? $"{TotalDocuments} doc(s) ouvert(s), {DirtyDocuments} modifie(s)"
             : "Inventor non connecte";
+        public string ActiveDocSaveStatus => !IsInventorConnected ? "Non connecte"
+            : IsActiveDocumentDirty ? "En attente de sauvegarde" : "Sauvegarde";
+        public string ActiveDocSaveStatusColor => !IsInventorConnected ? "#B8C7D6"
+            : IsActiveDocumentDirty ? "#E81123" : "#00D26A";
 
         // Acces aux settings
         public AppSettings Settings => _settingsService.Current;
@@ -113,7 +127,7 @@ namespace InventorAutoSave.ViewModels
             _inventorService.Connected += (s, e) =>
                 App.Current.Dispatcher.Invoke(() => IsInventorConnected = true);
             _inventorService.Disconnected += (s, e) =>
-                App.Current.Dispatcher.Invoke(() => { IsInventorConnected = false; ActiveDocumentName = "Aucun document"; TotalDocuments = 0; DirtyDocuments = 0; });
+                App.Current.Dispatcher.Invoke(() => { IsInventorConnected = false; ActiveDocumentName = "Aucun document"; TotalDocuments = 0; DirtyDocuments = 0; IsActiveDocumentDirty = false; });
 
             _timerService.SaveCompleted += (s, e) =>
                 App.Current.Dispatcher.BeginInvoke(() => OnSaveCompleted(e));
@@ -192,6 +206,9 @@ namespace InventorAutoSave.ViewModels
                         var (total, dirty) = _inventorService.GetDocumentCounts();
                         TotalDocuments = total;
                         DirtyDocuments = dirty;
+
+                        bool? activeDocDirty = _inventorService.IsActiveDocumentDirty();
+                        IsActiveDocumentDirty = activeDocDirty ?? false;
                     }
                     catch { }
                 }
@@ -274,6 +291,7 @@ namespace InventorAutoSave.ViewModels
         {
             if (param is int seconds)
             {
+                _settingsService.Update(s => s.SaveIntervalSeconds = seconds);
                 _timerService.ChangeInterval(seconds);
                 _timerStartedAt = DateTime.Now;
                 OnPropertyChanged(nameof(Settings));

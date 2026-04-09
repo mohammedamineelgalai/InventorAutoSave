@@ -2,13 +2,10 @@
 
   <PropertyGroup>
     <!--
-      Prevent MSBuild from generating duplicate AssemblyInfo attributes
-      when both 'dotnet build' and 'dotnet publish -r win-x64' artifacts
-      coexist under obj/. This eliminates the CS0579 "Duplicate attribute"
-      warnings that VS shows when it discovers multiple AssemblyInfo.cs
-      files across obj/Release/net8.0-windows/ and obj/.../win-x64/.
+      Force la configuration par defaut a Release pour que le language server C#
+      (VS Code / Roslyn) ne cree PAS de obj\Debug\ en arriere-plan.
     -->
-    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
 
     <!--
       Exclude RID-specific intermediate output folders from being picked

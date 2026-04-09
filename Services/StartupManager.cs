@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace InventorAutoSave.Services
@@ -32,10 +34,9 @@ namespace InventorAutoSave.Services
         {
             try
             {
-                string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                // Si publie en SingleFile, .Location retourne "" -> utiliser le process
-                if (string.IsNullOrEmpty(exePath))
-                    exePath = Environment.ProcessPath ?? "";
+                // Environment.ProcessPath is reliable for SingleFile apps
+                // (Assembly.Location returns "" in SingleFile — see IL3000)
+                string exePath = Environment.ProcessPath ?? "";
 
                 if (string.IsNullOrEmpty(exePath) || !File.Exists(exePath))
                 {
@@ -76,9 +77,8 @@ namespace InventorAutoSave.Services
         /// </summary>
         private static void CreateShortcut(string lnkPath, string targetPath, string description)
         {
-            Type? wshType = Type.GetTypeFromProgID("WScript.Shell");
-            if (wshType == null)
-                throw new InvalidOperationException("WScript.Shell non disponible");
+            Type wshType = Type.GetTypeFromProgID("WScript.Shell")
+                ?? throw new InvalidOperationException("WScript.Shell non disponible");
 
             object? shell = Activator.CreateInstance(wshType);
             if (shell == null) return;
@@ -88,20 +88,20 @@ namespace InventorAutoSave.Services
                 object? shortcut = wshType.InvokeMember(
                     "CreateShortcut",
                     System.Reflection.BindingFlags.InvokeMethod,
-                    null, shell, new object[] { lnkPath });
+                    null, shell, [lnkPath]);
 
                 if (shortcut == null) return;
 
                 Type scType = shortcut.GetType();
                 scType.InvokeMember("TargetPath",
                     System.Reflection.BindingFlags.SetProperty, null, shortcut,
-                    new object[] { targetPath });
+                    [targetPath]);
                 scType.InvokeMember("WorkingDirectory",
                     System.Reflection.BindingFlags.SetProperty, null, shortcut,
-                    new object[] { Path.GetDirectoryName(targetPath) ?? "" });
+                    [Path.GetDirectoryName(targetPath) ?? ""]);
                 scType.InvokeMember("Description",
                     System.Reflection.BindingFlags.SetProperty, null, shortcut,
-                    new object[] { description });
+                    [description]);
 
                 // Icone (chercher InventorAutoSave.ico a cote de l'exe)
                 string icoPath = Path.Combine(
@@ -110,7 +110,7 @@ namespace InventorAutoSave.Services
                 {
                     scType.InvokeMember("IconLocation",
                         System.Reflection.BindingFlags.SetProperty, null, shortcut,
-                        new object[] { icoPath });
+                        [icoPath]);
                 }
 
                 scType.InvokeMember("Save",

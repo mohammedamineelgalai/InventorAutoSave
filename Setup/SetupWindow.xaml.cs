@@ -141,6 +141,23 @@ namespace InventorAutoSave.Setup
 
                 Directory.CreateDirectory(InstallDir);
                 Log("[+] Dossier cree: " + InstallDir);
+
+                // Nettoyer les anciens fichiers residuels (DLLs natives d'anciennes versions non-SingleFile)
+                // Ces DLLs interferent avec le SingleFile self-contained et causent un crash TypeConverter
+                string[] residualPatterns = ["*.dll", "*.pdb"];
+                foreach (string pattern in residualPatterns)
+                {
+                    foreach (string oldFile in Directory.GetFiles(InstallDir, pattern))
+                    {
+                        try
+                        {
+                            File.Delete(oldFile);
+                            Log("[i] Ancien fichier supprime: " + Path.GetFileName(oldFile));
+                        }
+                        catch { /* Fichier verrouille, on continue */ }
+                    }
+                }
+
                 SetStep(1, "ok");
 
                 // ── ETAPE 2: Extraire et installer les fichiers ──

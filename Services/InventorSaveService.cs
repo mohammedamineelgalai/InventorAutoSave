@@ -1,7 +1,11 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 using InventorAutoSave.Models;
 
 namespace InventorAutoSave.Services
@@ -340,6 +344,29 @@ namespace InventorAutoSave.Services
             }
             catch { }
             return null;
+        }
+
+        /// <summary>
+        /// Returns whether the active document has unsaved changes (Dirty flag).
+        /// null if no active document or Inventor not connected.
+        /// </summary>
+        public bool? IsActiveDocumentDirty()
+        {
+            if (!IsConnected || _inventorApp == null) return null;
+            try
+            {
+                object? doc = ComInvoke.GetProp(_inventorApp, "ActiveDocument");
+                if (doc == null) return null;
+                try
+                {
+                    return ComInvoke.GetBool(doc, "Dirty");
+                }
+                finally
+                {
+                    Marshal.ReleaseComObject(doc);
+                }
+            }
+            catch { return null; }
         }
 
         public bool IsInventorCalculating()

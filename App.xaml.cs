@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -40,6 +42,9 @@ namespace InventorAutoSave
         private MenuItem? _miNotifOff;
         private MenuItem? _miSafeOn;
         private MenuItem? _miSafeOff;
+
+        // Info documents (mis a jour dynamiquement)
+        private MenuItem? _miDocumentsInfo;
 
         // ═══════════════════════════════════════════════════════════════
         // STARTUP - avec global exception handlers
@@ -118,18 +123,18 @@ namespace InventorAutoSave
                 Visibility = Visibility.Visible
             };
 
-            // Charger l'icone
+            // Charger l'icone depuis les ressources WPF embarquees
             try
             {
-                string iconPath = System.IO.Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "Resources", "InventorAutoSave.ico");
-                if (System.IO.File.Exists(iconPath))
+                var iconUri = new Uri("pack://application:,,,/Resources/InventorAutoSave.ico", UriKind.Absolute);
+                using var stream = Application.GetResourceStream(iconUri)?.Stream;
+                if (stream != null)
                 {
-                    _trayIcon.Icon = new System.Drawing.Icon(iconPath);
+                    _trayIcon.Icon = new System.Drawing.Icon(stream);
                 }
                 else
                 {
-                    Logger.Log($"[!] Icone non trouvee: {iconPath}", Logger.LogLevel.WARNING);
+                    Logger.Log("[!] Icone non trouvee dans les ressources embarquees", Logger.LogLevel.WARNING);
                 }
             }
             catch (Exception ex)
@@ -177,6 +182,10 @@ namespace InventorAutoSave
                 catch (Exception ex) { Logger.Log($"[!] SaveNow: {ex.Message}", Logger.LogLevel.ERROR); }
             };
 
+            // ── Info documents (lecture seule, mis a jour dynamiquement) ──
+            _miDocumentsInfo = CreateDarkMenuItem("📄  Documents: --", darkItemStyle);
+            _miDocumentsInfo.IsEnabled = false;
+
             // ── Mode de sauvegarde (sous-menu) ──
             _miSaveMode = CreateDarkMenuItem("💡  Mode de sauvegarde", darkItemStyle);
             _miSaveActive = CreateDarkMenuItem("💾  Document actif (recommande)", darkItemStyle);
@@ -200,7 +209,7 @@ namespace InventorAutoSave
 
             // ── Intervalle (sous-menu) ──
             _miIntervalGroup = CreateDarkMenuItem("⏱️  Intervalle de sauvegarde", darkItemStyle);
-            int[] intervals = { 10, 30, 60, 120, 180, 300, 600, 900, 1200, 1800 };
+            int[] intervals = [10, 30, 60, 120, 180, 300, 600, 900, 1200, 1800];
             foreach (int sec in intervals)
             {
                 string label = AutoSaveTimerService.FormatInterval(sec);
@@ -312,6 +321,7 @@ namespace InventorAutoSave
             // Assembler le menu
             menu.Items.Add(_miToggleAutoSave);
             menu.Items.Add(miSaveNow);
+            menu.Items.Add(_miDocumentsInfo);
             menu.Items.Add(sep1);
             menu.Items.Add(_miSaveMode);
             menu.Items.Add(_miIntervalGroup);
@@ -396,6 +406,19 @@ namespace InventorAutoSave
                 {
                     _miStartup.IsChecked = s.StartWithWindows;
                     UpdateStartupMenuText();
+                }
+
+                // Info documents
+                if (_miDocumentsInfo != null)
+                {
+                    if (_viewModel.IsInventorConnected)
+                    {
+                        _miDocumentsInfo.Header = $"📄  Documents: {_viewModel.TotalDocuments} ouvert(s), {_viewModel.DirtyDocuments} modifie(s)";
+                    }
+                    else
+                    {
+                        _miDocumentsInfo.Header = "📄  Documents: Inventor non connecte";
+                    }
                 }
             }
             catch (Exception ex)

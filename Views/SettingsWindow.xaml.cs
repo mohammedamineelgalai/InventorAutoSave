@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -169,6 +170,19 @@ namespace InventorAutoSave.Views
             catch (Exception ex)
             {
                 Logger.Log($"[!] TglSafetyChecks_Click: {ex.Message}", Logger.LogLevel.WARNING);
+            }
+        }
+
+        private void BtnInfo_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var infoWindow = new InfoWindow { Owner = this };
+                infoWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"[-] BtnInfo_Click: {ex.Message}", Logger.LogLevel.ERROR);
             }
         }
     }

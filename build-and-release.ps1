@@ -34,7 +34,7 @@ $COMPANY       = "XNRGY Climate Systems ULC"
 $MAIN_PROJECT  = Join-Path $PSScriptRoot "$APP_NAME.csproj"
 $SETUP_PROJECT = Join-Path $PSScriptRoot "Setup\InventorAutoSave.Setup.csproj"
 $DIST_DIR      = Join-Path $PSScriptRoot "dist\${APP_NAME}_v${VERSION}"
-$PUBLISH_DIR   = Join-Path $PSScriptRoot "bin\Release\net8.0-windows\win-x64"
+$PUBLISH_DIR   = Join-Path $PSScriptRoot "publish"
 
 Push-Location $PSScriptRoot
 
@@ -142,6 +142,58 @@ function Write-Warn([string]$text) {
     Write-Host "  [!] $text" -ForegroundColor Yellow
 }
 
+# ============================================================
+# NETTOYAGE POST-BUILD — Supprime les artefacts obj\ qui causent
+# des "Duplicate AssemblyInfo" dans VS Code.
+# Appelé après CHAQUE build/publish pour corriger le problème
+# même si un agent a fait "dotnet build" directement (INTERDIT).
+# ============================================================
+function Remove-ObjDuplicates {
+    param([string]$Context = "post-build")
+    $cleaned = $false
+
+    # 1. Supprimer obj\Debug (si on build en Release, Debug est residuel)
+    #    OmniSharp/Roslyn peut recreer obj\Debug en arriere-plan — on le supprime
+    foreach ($objDebug in @("obj\Debug", "Setup\obj\Debug")) {
+        $fullPath = Join-Path $PSScriptRoot $objDebug
+        if (Test-Path $fullPath) {
+            Remove-Item $fullPath -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Info "[$Context] Nettoyage $objDebug (artefact residuel)"
+            $cleaned = $true
+        }
+    }
+
+    # 2. Supprimer obj\...\win-x64 (cree par dotnet publish -r win-x64)
+    foreach ($objRoot in @("obj", "Setup\obj")) {
+        $winX64 = Join-Path $PSScriptRoot "$objRoot\Release\net8.0-windows\win-x64"
+        if (Test-Path $winX64) {
+            Remove-Item $winX64 -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Info "[$Context] Nettoyage $objRoot\...\win-x64 (artefact publish)"
+            $cleaned = $true
+        }
+    }
+
+    # 3. Arreter le build server pour empecher la recreation de obj\Debug
+    #    Le Roslyn build server maintient un cache qui peut recreer obj\Debug
+    try {
+        $null = dotnet build-server shutdown 2>&1
+        Write-Info "[$Context] Build server arrete (evite recreation obj\Debug)"
+    } catch { }
+
+    # 4. Seconde passe — re-supprimer obj\Debug au cas ou le shutdown l'a recree
+    foreach ($objDebug in @("obj\Debug", "Setup\obj\Debug")) {
+        $fullPath = Join-Path $PSScriptRoot $objDebug
+        if (Test-Path $fullPath) {
+            Remove-Item $fullPath -Recurse -Force -ErrorAction SilentlyContinue
+            $cleaned = $true
+        }
+    }
+
+    if ($cleaned) {
+        Write-OK "[$Context] Artefacts dupliques nettoyes"
+    }
+}
+
 function Stop-ExistingInstances {
     $script:CurrentStep++
     Write-Host ""
@@ -194,7 +246,7 @@ if ($StepClean) {
     $CurrentStep++
     Write-Host ""
     Write-Host "  [$CurrentStep/$TotalSteps] Nettoyage des artefacts..." -ForegroundColor Yellow
-    $cleanDirs = @("bin\Release", "obj\Release", "Setup\bin\Release", "Setup\obj\Release", $DIST_DIR)
+    $cleanDirs = @("bin", "obj", "publish", "Setup\bin", "Setup\obj", $DIST_DIR)
     $cleanedCount = 0
     foreach ($dir in $cleanDirs) {
         $fullDir = if ([System.IO.Path]::IsPathRooted($dir)) { $dir } else { Join-Path $PSScriptRoot $dir }
@@ -274,6 +326,9 @@ if ($warnings.Count -gt 0) {
     Write-OK "Compilation reussie (0 warning(s))"
 }
 
+# Nettoyer les artefacts dupliques apres chaque build
+Remove-ObjDuplicates -Context "post-build"
+
 $buildSummary = "$($errors.Count) erreur(s), $($warnings.Count) avertissement(s)"
 
 # Mode Quick ou BuildOnly - on s'arrete apres le build
@@ -297,6 +352,7 @@ if ($StepPublish) {
     Write-Host ""
     Write-Host "  [$CurrentStep/$TotalSteps] Publication Self-Contained (win-x64, SingleFile)..." -ForegroundColor Yellow
     Write-Info "Target: win-x64 | SingleFile | Self-Contained"
+    Write-Info "Output: $PUBLISH_DIR"
 
     $publishOutput = dotnet publish $MAIN_PROJECT -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:PublishDir="$PUBLISH_DIR" --nologo 2>&1
     $publishExitCode = $LASTEXITCODE
@@ -326,6 +382,9 @@ if ($StepPublish) {
     $exeDate = (Get-Item $mainExe).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
     Write-OK "Publish reussi -> $APP_NAME.exe ($exeSize MB)"
     Write-Info "Date: $exeDate"
+
+    # Nettoyer les artefacts dupliques apres publish (win-x64, Debug, ref/refint)
+    Remove-ObjDuplicates -Context "post-publish"
 }
 
 # ============================================================
@@ -471,6 +530,9 @@ if ($StepSetup) {
                     Write-Fail "Installateur non trouve apres publish"
                 }
             }
+
+            # Nettoyer les artefacts dupliques apres build Setup
+            Remove-ObjDuplicates -Context "post-setup"
         }
     } else {
         Write-Warn "Projet Setup non trouve: $SETUP_PROJECT"

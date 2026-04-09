@@ -1,3 +1,4 @@
+
 # InventorAutoSave
 
 > **Sauvegarde automatique silencieuse pour Autodesk Inventor** via API COM — remplace le script AutoHotKey legacy par une solution WPF/.NET 8 robuste.

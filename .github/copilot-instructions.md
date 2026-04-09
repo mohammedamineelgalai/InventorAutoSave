@@ -351,6 +351,38 @@ Logger.Debug("[>] Traitement du fichier en cours...");
 
 ## BUILD & DÉPLOIEMENT
 
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║  [!!!] RÈGLE ABSOLUE — COMPILATION                                          ║
+║                                                                              ║
+║  TOUJOURS compiler via le script build-and-release.ps1                       ║
+║  Le script nettoie les fichiers obj\ dupliqués après chaque build/publish.   ║
+║                                                                              ║
+║  COMMANDES AUTORISÉES:                                                       ║
+║    .\build-and-release.ps1 -Quick       # Build Release rapide (app seule)  ║
+║    .\build-and-release.ps1 -BuildOnly   # Build sans publish ni setup       ║
+║    .\build-and-release.ps1 -SkipSetup   # Build + Publish sans installateur ║
+║    .\build-and-release.ps1 -SetupOnly   # Setup seul (après un publish)     ║
+║    .\build-and-release.ps1 -Auto        # Full pipeline automatique         ║
+║    .\build-and-release.ps1              # Full pipeline interactif          ║
+║    .\build-and-release.ps1 -Clean       # Nettoyage seul                    ║
+║                                                                              ║
+║  COMMANDES INTERDITES (créent des fichiers dupliqués dans obj\):             ║
+║    dotnet build                          ❌ INTERDIT                         ║
+║    dotnet build -c Release               ❌ INTERDIT                         ║
+║    dotnet build -c Debug                 ❌ INTERDIT                         ║
+║    dotnet publish                        ❌ INTERDIT                         ║
+║    dotnet publish -c Release -r win-x64  ❌ INTERDIT                         ║
+║    dotnet clean                          ❌ INTERDIT (utiliser -Clean)       ║
+║                                                                              ║
+║  POURQUOI: Les commandes dotnet directes créent des fichiers                 ║
+║  AssemblyInfo.cs dupliqués dans obj\ que VS Code détecte comme erreurs.      ║
+║  Le script nettoie automatiquement ces artefacts après chaque étape.         ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
 ### Build Script (build-and-release.ps1)
 
 ```powershell
@@ -366,15 +398,19 @@ Logger.Debug("[>] Traitement du fichier en cours...");
 .\build-and-release.ps1 -Quick       # Build Release uniquement
 ```
 
-### RÈGLE PUBLISH — PAS DE SOUS-DOSSIER publish\
+### RÈGLE PUBLISH — DOSSIER publish/ À LA RACINE
 
 ```powershell
-# CORRECT — Publier directement dans win-x64\
-$PUBLISH_DIR = "bin\Release\net8.0-windows\win-x64"
-dotnet publish -c Release -r win-x64 -p:PublishDir="$PUBLISH_DIR"
+# CORRECT — Publier dans publish/ à la racine du projet
+$PUBLISH_DIR = Join-Path $PSScriptRoot "publish"
+dotnet publish -c Release -r win-x64 --self-contained true `
+    -p:PublishSingleFile=true `
+    -p:IncludeNativeLibrariesForSelfExtract=true `
+    -p:EnableCompressionInSingleFile=true `
+    -p:PublishDir="$PUBLISH_DIR"
 
-# INTERDIT — MSBuild crée un sous-dossier publish\ par défaut
-# dotnet publish -c Release -r win-x64  # ❌ Crée win-x64\publish\
+# INTERDIT — Publier dans bin\ (mélange artefacts build et publish)
+# dotnet publish -c Release -r win-x64  # ❌ Crée bin\...\publish\
 ```
 
 ### Setup Project
@@ -382,9 +418,8 @@ dotnet publish -c Release -r win-x64 -p:PublishDir="$PUBLISH_DIR"
 Le sous-projet `Setup/` embarque le `.exe` principal comme `EmbeddedResource`:
 ```xml
 <!-- Setup/InventorAutoSave.Setup.csproj -->
-<EmbeddedResource Include="..\bin\Release\net8.0-windows\win-x64\InventorAutoSave.exe">
-    <LogicalName>InventorAutoSave.exe</LogicalName>
-</EmbeddedResource>
+<EmbeddedResource Include="..\publish\InventorAutoSave.exe"
+                  LogicalName="InventorAutoSave.exe"/>
 ```
 
 **CRITIQUE**: Le chemin DOIT correspondre exactement au `$PUBLISH_DIR` du build script.
@@ -524,7 +559,7 @@ StatusMessage         → Messages d'état
 - [ ] Emojis interfaces: uniquement professionnels (⚙️ 💡 📊 ✅ ❌ etc.) — JAMAIS visages/gestes/cœurs/animaux/transport
 - [ ] Version = 1.0.0 partout (titre, footer, tooltip, csproj, readme)
 - [ ] Le chemin publish n'a PAS de sous-dossier `publish\`
-- [ ] Build avec `dotnet build -c Release` avant commit
+- [ ] **COMPILER UNIQUEMENT via `.\build-and-release.ps1`** — JAMAIS `dotnet build` / `dotnet publish` directement
 - [ ] Toute modification de settings propage vers menu ET fenêtre
 
 ---
