@@ -378,7 +378,7 @@ namespace InventorAutoSave.Setup
                     "en cours" => System.Windows.Media.Brushes.White,
                     _          => new System.Windows.Media.SolidColorBrush(
                                     (System.Windows.Media.Color)System.Windows.Media.ColorConverter
-                                        .ConvertFromString("#666677"))
+                                        .ConvertFromString("#B8C7D6"))
                 };
 
                 switch (step)
@@ -405,7 +405,7 @@ namespace InventorAutoSave.Setup
                             ? System.Windows.Media.Brushes.LightGreen
                             : new System.Windows.Media.SolidColorBrush(
                                 (System.Windows.Media.Color)System.Windows.Media.ColorConverter
-                                    .ConvertFromString("#888899")),
+                                    .ConvertFromString("#B8C7D6")),
                     FontSize   = 11,
                     FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                     Margin     = new Thickness(0, 1, 0, 1)

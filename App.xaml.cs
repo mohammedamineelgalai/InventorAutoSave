@@ -183,8 +183,11 @@ namespace InventorAutoSave
             };
 
             // ── Info documents (lecture seule, mis a jour dynamiquement) ──
-            _miDocumentsInfo = CreateDarkMenuItem("📄  Documents: --", darkItemStyle);
-            _miDocumentsInfo.IsEnabled = false;
+            _miDocumentsInfo = new MenuItem();
+            if (darkItemStyle != null) _miDocumentsInfo.Style = darkItemStyle;
+            _miDocumentsInfo.IsHitTestVisible = false;
+            _miDocumentsInfo.Focusable = false;
+            UpdateDocumentsInfoHeader();
 
             // ── Mode de sauvegarde (sous-menu) ──
             _miSaveMode = CreateDarkMenuItem("💡  Mode de sauvegarde", darkItemStyle);
@@ -366,6 +369,37 @@ namespace InventorAutoSave
         }
 
         /// <summary>
+        /// Met a jour le MenuItem info documents avec des couleurs distinctes:
+        /// blanc pour les documents ouverts, rouge clair pour les modifies.
+        /// </summary>
+        private void UpdateDocumentsInfoHeader()
+        {
+            if (_miDocumentsInfo == null) return;
+
+            var tb = new System.Windows.Controls.TextBlock();
+
+            if (!_viewModel.IsInventorConnected)
+            {
+                tb.Inlines.Add(new System.Windows.Documents.Run("📄  Documents: Inventor non connecte") { Foreground = Brushes.White });
+            }
+            else
+            {
+                tb.Inlines.Add(new System.Windows.Documents.Run("📄  ") { Foreground = Brushes.White });
+                tb.Inlines.Add(new System.Windows.Documents.Run($"{_viewModel.TotalDocuments} ouvert(s)") { Foreground = Brushes.White, FontWeight = FontWeights.SemiBold });
+                tb.Inlines.Add(new System.Windows.Documents.Run("  ·  ") { Foreground = Brushes.White });
+                tb.Inlines.Add(new System.Windows.Documents.Run($"{_viewModel.DirtyDocuments} modifie(s)")
+                {
+                    Foreground = _viewModel.DirtyDocuments > 0
+                        ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF6B6B"))
+                        : Brushes.White,
+                    FontWeight = _viewModel.DirtyDocuments > 0 ? FontWeights.Bold : FontWeights.Normal
+                });
+            }
+
+            _miDocumentsInfo.Header = tb;
+        }
+
+        /// <summary>
         /// Synchronise l'état de tous les éléments du menu contextuel
         /// avec les settings actuels. Appelée quand le menu s'ouvre
         /// et quand la fenêtre Settings se ferme.
@@ -409,17 +443,7 @@ namespace InventorAutoSave
                 }
 
                 // Info documents
-                if (_miDocumentsInfo != null)
-                {
-                    if (_viewModel.IsInventorConnected)
-                    {
-                        _miDocumentsInfo.Header = $"📄  Documents: {_viewModel.TotalDocuments} ouvert(s), {_viewModel.DirtyDocuments} modifie(s)";
-                    }
-                    else
-                    {
-                        _miDocumentsInfo.Header = "📄  Documents: Inventor non connecte";
-                    }
-                }
+                UpdateDocumentsInfoHeader();
             }
             catch (Exception ex)
             {

@@ -43,7 +43,7 @@
 
         <Style x:Key="FeatureDescriptionStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="#cccccc"/>
+            <Setter Property="Foreground" Value="#B8C7D6"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="Margin" Value="0,6,0,0"/>
             <Setter Property="LineHeight" Value="20"/>
@@ -126,7 +126,7 @@
         </Style>
 
         <Style x:Key="OptionCheck" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="#cccccc"/>
+            <Setter Property="Foreground" Value="#B8C7D6"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Margin" Value="0,5"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -172,7 +172,7 @@
                         <TextBlock Text="&#x1F4BE;" FontSize="15" Foreground="White"
                                    VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <TextBlock Text="InventorAutoSave &#x2014; Installation"
-                                   Foreground="#9ca3af" FontSize="12" VerticalAlignment="Center"/>
+                                   Foreground="#B8C7D6" FontSize="12" VerticalAlignment="Center"/>
                     </StackPanel>
                     <Button Grid.Column="1" x:Name="BtnClose" Content="&#x2715;"
                             Width="44" Height="44" BorderThickness="0" FontSize="13"
@@ -223,7 +223,7 @@
                         <TextBlock Text="InventorAutoSave" FontSize="22" FontWeight="Bold" Foreground="White"/>
                         <TextBlock FontSize="13" Margin="0,4,0,0">
                             <Run Text="&#x1F4A1;" Foreground="#FFD700"/>
-                            <Run Text=" Sauvegarde automatique silencieuse pour Autodesk Inventor" Foreground="#e0e0e0"/>
+                            <Run Text=" Sauvegarde automatique silencieuse pour Autodesk Inventor" Foreground="#B8C7D6"/>
                         </TextBlock>
                     </StackPanel>
                 </StackPanel>
@@ -302,19 +302,19 @@
                         <Border Style="{StaticResource FeatureCardStyle}">
                             <StackPanel>
                                 <CheckBox x:Name="ChkStartup" Style="{StaticResource OptionCheck}" IsChecked="True">
-                                    <TextBlock TextWrapping="Wrap" Foreground="#cccccc" FontSize="12">
+                                    <TextBlock TextWrapping="Wrap" Foreground="#B8C7D6" FontSize="12">
                                         <Run Text="&#x1F4C5; " Foreground="White"/>
                                         <Run Text="Demarrer automatiquement avec Windows"/>
                                     </TextBlock>
                                 </CheckBox>
                                 <CheckBox x:Name="ChkLaunch" Style="{StaticResource OptionCheck}" IsChecked="True">
-                                    <TextBlock TextWrapping="Wrap" Foreground="#cccccc" FontSize="12">
+                                    <TextBlock TextWrapping="Wrap" Foreground="#B8C7D6" FontSize="12">
                                         <Run Text="&#x25BA; " Foreground="White"/>
                                         <Run Text="Lancer InventorAutoSave apres l'installation"/>
                                     </TextBlock>
                                 </CheckBox>
                                 <CheckBox x:Name="ChkShortcut" Style="{StaticResource OptionCheck}" IsChecked="True">
-                                    <TextBlock TextWrapping="Wrap" Foreground="#cccccc" FontSize="12">
+                                    <TextBlock TextWrapping="Wrap" Foreground="#B8C7D6" FontSize="12">
                                         <Run Text="&#x1F4CB; " Foreground="White"/>
                                         <Run Text="Creer un raccourci dans le menu Demarrer"/>
                                     </TextBlock>
@@ -374,16 +374,16 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <TextBlock x:Name="Step1Icon" Grid.Row="0" Grid.Column="0" Text="&#x2B1C;" FontSize="13" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="Step1Text" Grid.Row="0" Grid.Column="1" Text="Creation du dossier d'installation" Foreground="#9ca3af" FontSize="12" Margin="8,5" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="Step2Icon" Grid.Row="1" Grid.Column="0" Text="&#x2B1C;" FontSize="13" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="Step2Text" Grid.Row="1" Grid.Column="1" Text="Copie des fichiers de l'application" Foreground="#9ca3af" FontSize="12" Margin="8,5" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="Step3Icon" Grid.Row="2" Grid.Column="0" Text="&#x2B1C;" FontSize="13" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="Step3Text" Grid.Row="2" Grid.Column="1" Text="Configuration du demarrage Windows" Foreground="#9ca3af" FontSize="12" Margin="8,5" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="Step4Icon" Grid.Row="3" Grid.Column="0" Text="&#x2B1C;" FontSize="13" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="Step4Text" Grid.Row="3" Grid.Column="1" Text="Creation des raccourcis" Foreground="#9ca3af" FontSize="12" Margin="8,5" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="Step5Icon" Grid.Row="4" Grid.Column="0" Text="&#x2B1C;" FontSize="13" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="Step5Text" Grid.Row="4" Grid.Column="1" Text="Finalisation" Foreground="#9ca3af" FontSize="12" Margin="8,5" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Step1Icon" Grid.Row="0" Grid.Column="0" Text="&#x2B1C;" FontSize="13" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Step1Text" Grid.Row="0" Grid.Column="1" Text="Creation du dossier d'installation" Foreground="#B8C7D6" FontSize="12" Margin="8,5" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Step2Icon" Grid.Row="1" Grid.Column="0" Text="&#x2B1C;" FontSize="13" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Step2Text" Grid.Row="1" Grid.Column="1" Text="Copie des fichiers de l'application" Foreground="#B8C7D6" FontSize="12" Margin="8,5" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Step3Icon" Grid.Row="2" Grid.Column="0" Text="&#x2B1C;" FontSize="13" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Step3Text" Grid.Row="2" Grid.Column="1" Text="Configuration du demarrage Windows" Foreground="#B8C7D6" FontSize="12" Margin="8,5" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Step4Icon" Grid.Row="3" Grid.Column="0" Text="&#x2B1C;" FontSize="13" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Step4Text" Grid.Row="3" Grid.Column="1" Text="Creation des raccourcis" Foreground="#B8C7D6" FontSize="12" Margin="8,5" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Step5Icon" Grid.Row="4" Grid.Column="0" Text="&#x2B1C;" FontSize="13" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Step5Text" Grid.Row="4" Grid.Column="1" Text="Finalisation" Foreground="#B8C7D6" FontSize="12" Margin="8,5" VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
 
@@ -439,7 +439,7 @@
                 <!-- ─── PANEL 4 : ERREUR ─── -->
                 <StackPanel x:Name="PanelError" Margin="22,24,22,10"
                             Visibility="Collapsed" HorizontalAlignment="Center">
-                    <TextBlock Text="&#x274C;" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                    <TextBlock Text="&#x274C;" FontSize="48" Foreground="#f87171" HorizontalAlignment="Center" Margin="0,0,0,12"/>
                     <TextBlock Text="Erreur lors de l'installation"
                                Foreground="White" FontSize="16" FontWeight="Bold"
                                HorizontalAlignment="Center" Margin="0,0,0,8"/>

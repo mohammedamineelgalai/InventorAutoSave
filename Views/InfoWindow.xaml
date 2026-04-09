@@ -29,7 +29,7 @@
             </Border.Background>
             <StackPanel HorizontalAlignment="Center">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <TextBlock Text="⚙️" FontSize="40" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                    <TextBlock Text="⚙️" FontSize="40" Foreground="White" VerticalAlignment="Center" Margin="0,0,15,0"/>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Inventor AutoSave" FontSize="26" FontWeight="Bold" Foreground="White"/>
                         <TextBlock Text="Smart Tools Amine v1.0 — Sauvegarde automatique via API COM"

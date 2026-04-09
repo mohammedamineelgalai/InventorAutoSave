@@ -64,7 +64,7 @@ namespace InventorAutoSave.Views
                     ? new System.Windows.Media.SolidColorBrush(
                         (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#00D26A"))
                     : new System.Windows.Media.SolidColorBrush(
-                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#888888"));
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#B8C7D6"));
 
                 TglSafetyChecks.IsChecked = s.SafetyChecks;
                 TxtSafetyStatus.Text = s.SafetyChecks ? "ON" : "OFF";
@@ -72,7 +72,7 @@ namespace InventorAutoSave.Views
                     ? new System.Windows.Media.SolidColorBrush(
                         (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#00D26A"))
                     : new System.Windows.Media.SolidColorBrush(
-                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#888888"));
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#B8C7D6"));
 
                 // Intervalle actuel
                 if (TxtCurrentInterval != null)
@@ -144,7 +144,7 @@ namespace InventorAutoSave.Views
                     ? new System.Windows.Media.SolidColorBrush(
                         (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#00D26A"))
                     : new System.Windows.Media.SolidColorBrush(
-                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#888888"));
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#B8C7D6"));
             }
             catch (Exception ex)
             {
@@ -165,7 +165,7 @@ namespace InventorAutoSave.Views
                     ? new System.Windows.Media.SolidColorBrush(
                         (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#00D26A"))
                     : new System.Windows.Media.SolidColorBrush(
-                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#888888"));
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#B8C7D6"));
             }
             catch (Exception ex)
             {
