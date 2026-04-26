@@ -15,10 +15,11 @@ namespace InventorAutoSave.Services
     /// En .NET 8, dynamic sur un objet COM retourne souvent "Specified cast is not valid"
     /// quand la propriete retourne un autre objet COM (ex: ActiveDocument).
     /// Type.InvokeMember utilise IDispatch::Invoke correctement.
-    ///
+    /// <para>
     /// IMPORTANT: Tous les appels doivent etre effectues depuis un thread STA
     /// (thread UI WPF). Les appels depuis des threads MTA (ThreadPool, Task.Run)
     /// causent des MissingMethodException.
+    /// </para>
     /// </summary>
     internal static class ComInvoke
     {
@@ -39,7 +40,7 @@ namespace InventorAutoSave.Services
         /// <summary>Ecrire une propriete COM</summary>
         public static void SetProp(object comObj, string name, object value)
         {
-            comObj.GetType().InvokeMember(name, SETPROP, null, comObj, new[] { value });
+            comObj.GetType().InvokeMember(name, SETPROP, null, comObj, [value]);
         }
 
         /// <summary>Appeler une methode COM sans arguments</summary>
@@ -88,9 +89,9 @@ namespace InventorAutoSave.Services
         {
             var type = collection.GetType();
             // Item sur les collections Inventor peut etre une propriete ou methode
-            try { return type.InvokeMember("Item", GETPROP, null, collection, new object[] { index }); }
+            try { return type.InvokeMember("Item", GETPROP, null, collection, [index]); }
             catch (MissingMethodException) { }
-            return type.InvokeMember("Item", INVOKE, null, collection, new object[] { index });
+            return type.InvokeMember("Item", INVOKE, null, collection, [index]);
         }
     }
 
@@ -99,6 +100,11 @@ namespace InventorAutoSave.Services
         public required object Doc { get; init; }
         public required string Name { get; init; }
         public required int Order { get; init; }
+        // Phase 18 — Fix segment corruption (handoff XEAT 2026-04-25)
+        // Order: 0 = IPT, 1 = Sub-IAM, 2 = Top-IAM (Update + Save), 3 = autre
+        // Drawings .idw/.dwg/.ipn ne sont JAMAIS ajoutes (skip total).
+        public string Ext { get; init; } = "";
+        public bool IsTopAssembly { get; init; }
     }
 
     /// <summary>
@@ -107,11 +113,11 @@ namespace InventorAutoSave.Services
     /// car en .NET 8 dynamic echoue avec "Specified cast is not valid" sur les
     /// proprietes qui retournent des objets COM (ActiveDocument, Documents, etc.).
     /// </summary>
-    public class InventorSaveService
+    public partial class InventorSaveService
     {
-        [DllImport("ole32.dll")]
-        private static extern int CLSIDFromProgID(
-            [MarshalAs(UnmanagedType.LPWStr)] string lpszProgID,
+        [LibraryImport("ole32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        private static partial int CLSIDFromProgID(
+            string lpszProgID,
             out Guid pclsid);
 
         [DllImport("oleaut32.dll", EntryPoint = "GetActiveObject", PreserveSig = false)]
@@ -143,10 +149,12 @@ namespace InventorAutoSave.Services
             var now = DateTime.Now;
             if ((now - _lastConnectionAttempt).TotalMilliseconds < MIN_RETRY_INTERVAL_MS
                 && _lastConnectionAttempt != DateTime.MinValue)
+            {
                 return _isConnected;
+            }
             _lastConnectionAttempt = now;
 
-            if (!Process.GetProcessesByName("Inventor").Any())
+            if (Process.GetProcessesByName("Inventor").Length == 0)
             {
                 if (_isConnected) SetDisconnected();
                 return false;
@@ -162,7 +170,9 @@ namespace InventorAutoSave.Services
             if (_isConnected) SetDisconnected();
 
             if (_consecutiveFailures % 10 == 0)
+            {
                 Logger.Log(string.Format("[~] Connexion Inventor: {0} tentatives...", _consecutiveFailures), Logger.LogLevel.DEBUG);
+            }
 
             return false;
         }
@@ -182,7 +192,7 @@ namespace InventorAutoSave.Services
                     _isConnected = true;
                     if (!wasConnected)
                     {
-                        var tid = Thread.CurrentThread.ManagedThreadId;
+                        var tid = Environment.CurrentManagedThreadId;
                         var apt = Thread.CurrentThread.GetApartmentState();
                         Logger.Log(string.Format("[+] Connecte a Inventor via oleaut32 IDispatch (Thread={0}, Apt={1})", tid, apt), Logger.LogLevel.INFO);
                         try
@@ -380,8 +390,8 @@ namespace InventorAutoSave.Services
                     try { title = ComInvoke.GetString(_inventorApp, "Caption"); } catch { }
                     if (title != null)
                     {
-                        string[] busyKw = { "Calculating", "Calcul", "Processing", "Rebuilding",
-                                             "Generating", "Computing", "Working", "Loading" };
+                        string[] busyKw = ["Calculating", "Calcul", "Processing", "Rebuilding",
+                                             "Generating", "Computing", "Working", "Loading"];
                         foreach (var kw in busyKw)
                             if (title.Contains(kw, StringComparison.OrdinalIgnoreCase)) return true;
                     }
@@ -441,7 +451,7 @@ namespace InventorAutoSave.Services
         {
             try
             {
-                var tid = Thread.CurrentThread.ManagedThreadId;
+                var tid = Environment.CurrentManagedThreadId;
                 var apt = Thread.CurrentThread.GetApartmentState();
                 Logger.Log(string.Format("[>] SaveActiveDocument: debut (Thread={0}, Apt={1})", tid, apt), Logger.LogLevel.DEBUG);
 
@@ -536,13 +546,21 @@ namespace InventorAutoSave.Services
                     }
 
                     int savedCount = 0, skippedCount = 0;
-                    foreach (var entry in toSave.OrderBy(x => x.Order))
+
+                    // Phase 18 — Strategie 4-phases (fix segment corruption)
+                    var sw = System.Diagnostics.Stopwatch.StartNew();
+                    int iptCount = 0, subIamCount = 0, topUpdated = 0, topSaved = 0;
+
+                    // Phase 1+2 : IPT (Order 0) puis Sub-IAM (Order 1)
+                    foreach (var entry in toSave.Where(e => e.Order < 2).OrderBy(e => e.Order))
                     {
                         try
                         {
                             Logger.Log(string.Format("[>] Sauvegarde: {0} (order={1})", entry.Name, entry.Order), Logger.LogLevel.DEBUG);
                             ComInvoke.Call(entry.Doc, "Save");
                             savedCount++;
+                            if (entry.Ext == ".ipt") iptCount++;
+                            else if (entry.Ext == ".iam") subIamCount++;
                             Logger.Log(string.Format("[+] OK: {0}", entry.Name), Logger.LogLevel.DEBUG);
                         }
                         catch (Exception ex)
@@ -552,7 +570,50 @@ namespace InventorAutoSave.Services
                         }
                     }
 
-                    Logger.Log(string.Format("[+] SaveActive: {0} doc(s) sauvegardes", savedCount), Logger.LogLevel.INFO);
+                    // Phase 3 : Update + Save Top Assembly (regenere les segments BREP)
+                    var topEntry = toSave.FirstOrDefault(e => e.IsTopAssembly);
+                    if (topEntry != null)
+                    {
+                        try
+                        {
+                            Logger.Log(string.Format("[>] Update top assembly: {0}", topEntry.Name), Logger.LogLevel.DEBUG);
+                            try { ComInvoke.Call(topEntry.Doc, "Update"); topUpdated = 1; }
+                            catch (Exception exU) { Logger.Log(string.Format("[!] Update top echoue: {0}", exU.Message), Logger.LogLevel.WARNING); }
+
+                            ComInvoke.Call(topEntry.Doc, "Save");
+                            topSaved = 1;
+                            savedCount++;
+                            Logger.Log(string.Format("[+] Top sauvegarde: {0}", topEntry.Name), Logger.LogLevel.INFO);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Log(string.Format("[!] Erreur Save top {0}: {1}", topEntry.Name, ex.Message), Logger.LogLevel.WARNING);
+                            skippedCount++;
+                        }
+                    }
+
+                    // Fallback : entries Order=3 (cas exotiques) sauves en dernier sans Update
+                    foreach (var entry in toSave.Where(e => e.Order == 3))
+                    {
+                        try
+                        {
+                            ComInvoke.Call(entry.Doc, "Save");
+                            savedCount++;
+                            Logger.Log(string.Format("[+] OK (fallback): {0}", entry.Name), Logger.LogLevel.DEBUG);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Log(string.Format("[!] Erreur Save fallback {0}: {1}", entry.Name, ex.Message), Logger.LogLevel.WARNING);
+                            skippedCount++;
+                        }
+                    }
+
+                    sw.Stop();
+                    Logger.Log(string.Format(
+                        "[+] SaveActive ordonne: {0} doc(s) | IPT={1}, Sub-IAM={2}, Top-IAM update={3}/save={4} | skip={5} | {6} ms",
+                        savedCount, iptCount, subIamCount, topUpdated, topSaved, skippedCount, sw.ElapsedMilliseconds),
+                        Logger.LogLevel.INFO);
+
                     var result = new SaveResult { Success = true, DocumentsSaved = savedCount, DocumentsSkipped = skippedCount, Mode = SaveMode.SaveActive };
                     SaveCompleted?.Invoke(this, result);
                     return result;
@@ -572,15 +633,55 @@ namespace InventorAutoSave.Services
             }
         }
 
-        private List<DocEntry> CollectDirtyDocuments(object rootDoc)
+        private static List<DocEntry> CollectDirtyDocuments(object rootDoc)
         {
             var result = new List<DocEntry>();
             var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            CollectRecursive(rootDoc, result, visited);
+
+            // Phase 18 — Intelligence contextuelle :
+            // Determine le "top effectif" selon le type du rootDoc.
+            //   .iam  → rootDoc lui-meme = top (Update + Save en derniere phase)
+            //   .ipt  → pas de top assembly (sauvegarde directe en Phase 1)
+            //   .idw/.dwg/.ipn → top = null pour l'instant. On scannera les references
+            //                    (modeles 3D) et on promouvra le 1er .iam Dirty comme top.
+            string? topFullPath = null;
+            try
+            {
+                string? rootPath = ComInvoke.GetString(rootDoc, "FullFileName");
+                string rootExt = string.IsNullOrEmpty(rootPath)
+                    ? ""
+                    : Path.GetExtension(rootPath).ToLowerInvariant();
+                if (rootExt == ".iam" && !string.IsNullOrWhiteSpace(rootPath))
+                    topFullPath = rootPath;
+            }
+            catch { }
+
+            CollectRecursive(rootDoc, result, visited, topFullPath);
+
+            // Si racine etait un drawing/presentation et qu'aucun top .iam n'a ete identifie,
+            // promouvoir le 1er .iam Dirty trouve dans la collecte comme top effectif.
+            if (topFullPath == null)
+            {
+                int firstIamIdx = result.FindIndex(e => e.Ext == ".iam");
+                if (firstIamIdx >= 0)
+                {
+                    var old = result[firstIamIdx];
+                    result[firstIamIdx] = new DocEntry
+                    {
+                        Doc = old.Doc,
+                        Name = old.Name,
+                        Order = 2,
+                        Ext = old.Ext,
+                        IsTopAssembly = true
+                    };
+                    Logger.Log(string.Format("[i] Top promu (racine = drawing/ipn): {0}", old.Name), Logger.LogLevel.DEBUG);
+                }
+            }
+
             return result;
         }
 
-        private void CollectRecursive(object doc, List<DocEntry> result, HashSet<string> visited)
+        private static void CollectRecursive(object doc, List<DocEntry> result, HashSet<string> visited, string? topFullPath)
         {
             try
             {
@@ -605,7 +706,9 @@ namespace InventorAutoSave.Services
                 try { isAssembly = ComInvoke.GetInt(doc, "DocumentType") == 12291; }
                 catch { isAssembly = ext == ".iam"; }
 
-                if (isAssembly)
+                // Recurser dans les ReferencedDocuments des assemblages (.iam) ET des
+                // drawings/presentations (.idw/.dwg/.ipn) car ils referencent les modeles 3D.
+                if (isAssembly || ext == ".idw" || ext == ".dwg" || ext == ".ipn")
                 {
                     try
                     {
@@ -613,19 +716,28 @@ namespace InventorAutoSave.Services
                         if (refDocs != null)
                         {
                             int refCount = ComInvoke.GetInt(refDocs, "Count");
-                            Logger.Log(string.Format("[>] '{0}' assemblage, {1} ref(s)", name, refCount), Logger.LogLevel.DEBUG);
+                            Logger.Log(string.Format("[>] '{0}' ({1}), {2} ref(s)", name, ext, refCount), Logger.LogLevel.DEBUG);
                             for (int i = 1; i <= refCount; i++)
                             {
                                 try
                                 {
                                     object? refDoc = ComInvoke.GetItem(refDocs, i);
-                                    if (refDoc != null) CollectRecursive(refDoc, result, visited);
+                                    if (refDoc != null) CollectRecursive(refDoc, result, visited, topFullPath);
                                 }
                                 catch { }
                             }
                         }
                     }
                     catch { }
+                }
+
+                // Phase 18 — Skip TOTAL des drawings et presentations.
+                // Ils ne sont jamais sauves automatiquement (drafter rebuild risque).
+                // Leurs modeles 3D references sont traites par la recursion ci-dessus.
+                if (ext == ".idw" || ext == ".dwg" || ext == ".ipn")
+                {
+                    Logger.Log(string.Format("[i] Skip drawing/presentation: {0}", name), Logger.LogLevel.DEBUG);
+                    return;
                 }
 
                 bool isDirty = false;
@@ -636,8 +748,35 @@ namespace InventorAutoSave.Services
 
                 if (isDirty)
                 {
-                    int order = ext switch { ".ipt" => 0, ".iam" => 1, ".idw" or ".dwg" => 2, _ => 3 };
-                    result.Add(new DocEntry { Doc = doc, Name = name, Order = order });
+                    // Nouveau ordering 4-phases :
+                    //   0 = IPT (parts)
+                    //   1 = Sub-IAM (assemblages non-top)
+                    //   2 = Top-IAM (Update + Save en derniere phase)
+                    //   3 = autre (fallback)
+                    int order;
+                    bool isTop = false;
+                    switch (ext)
+                    {
+                        case ".ipt":
+                            order = 0;
+                            break;
+                        case ".iam":
+                            isTop = !string.IsNullOrEmpty(topFullPath)
+                                    && string.Equals(fullPath, topFullPath, StringComparison.OrdinalIgnoreCase);
+                            order = isTop ? 2 : 1;
+                            break;
+                        default:
+                            order = 3;
+                            break;
+                    }
+                    result.Add(new DocEntry
+                    {
+                        Doc = doc,
+                        Name = name,
+                        Order = order,
+                        Ext = ext,
+                        IsTopAssembly = isTop
+                    });
                 }
             }
             catch (Exception ex)
@@ -666,6 +805,33 @@ namespace InventorAutoSave.Services
                 if (docCount == 0)
                     return new SaveResult { Success = true, DocumentsSaved = 0, DocumentsSkipped = 0, Mode = SaveMode.SaveAll };
 
+                // Phase 18 — Identifier le top via ActiveDocument.FullFileName
+                // (la fenetre au premier plan definit le contexte de sauvegarde).
+                // Si ActiveDocument est un drawing/.ipn, top reste null et sera promu
+                // sur le 1er .iam Dirty trouve.
+                string? topFullPath = null;
+                try
+                {
+                    object? activeDoc = ComInvoke.GetProp(_inventorApp!, "ActiveDocument");
+                    if (activeDoc != null)
+                    {
+                        try
+                        {
+                            string? activePath = ComInvoke.GetString(activeDoc, "FullFileName");
+                            string activeExt = string.IsNullOrEmpty(activePath)
+                                ? ""
+                                : Path.GetExtension(activePath).ToLowerInvariant();
+                            if (activeExt == ".iam" && !string.IsNullOrWhiteSpace(activePath))
+                                topFullPath = activePath;
+                        }
+                        finally { Marshal.ReleaseComObject(activeDoc); }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log(string.Format("[!] SaveAll: detection top echouee: {0}", ex.Message), Logger.LogLevel.DEBUG);
+                }
+
                 var toSave = new List<DocEntry>();
                 for (int i = 1; i <= docCount; i++)
                 {
@@ -687,8 +853,33 @@ namespace InventorAutoSave.Services
                         if (!isMod) { skippedCount++; continue; }
 
                         string ext = Path.GetExtension(fp).ToLowerInvariant();
-                        int order = ext switch { ".ipt" => 0, ".iam" => 1, ".idw" or ".dwg" => 2, _ => 3 };
-                        toSave.Add(new DocEntry { Doc = doc, Name = docName, Order = order });
+
+                        // Phase 18 — Skip TOTAL des drawings et presentations
+                        if (ext == ".idw" || ext == ".dwg" || ext == ".ipn")
+                        {
+                            Logger.Log(string.Format("[i] SaveAll skip drawing/presentation: {0}", docName), Logger.LogLevel.DEBUG);
+                            skippedCount++;
+                            continue;
+                        }
+
+                        // Nouveau ordering 4-phases
+                        int order;
+                        bool isTop = false;
+                        switch (ext)
+                        {
+                            case ".ipt":
+                                order = 0;
+                                break;
+                            case ".iam":
+                                isTop = !string.IsNullOrEmpty(topFullPath)
+                                        && string.Equals(fp, topFullPath, StringComparison.OrdinalIgnoreCase);
+                                order = isTop ? 2 : 1;
+                                break;
+                            default:
+                                order = 3;
+                                break;
+                        }
+                        toSave.Add(new DocEntry { Doc = doc, Name = docName, Order = order, Ext = ext, IsTopAssembly = isTop });
                     }
                     catch (Exception ex)
                     {
@@ -696,14 +887,41 @@ namespace InventorAutoSave.Services
                     }
                 }
 
+                // Si aucun top n'a ete identifie (ActiveDocument etait drawing/ipn ou aucun),
+                // promouvoir le 1er .iam Dirty trouve comme top effectif.
+                if (topFullPath == null)
+                {
+                    int firstIamIdx = toSave.FindIndex(e => e.Ext == ".iam");
+                    if (firstIamIdx >= 0)
+                    {
+                        var old = toSave[firstIamIdx];
+                        toSave[firstIamIdx] = new DocEntry
+                        {
+                            Doc = old.Doc,
+                            Name = old.Name,
+                            Order = 2,
+                            Ext = old.Ext,
+                            IsTopAssembly = true
+                        };
+                        Logger.Log(string.Format("[i] SaveAll: top promu (ActiveDocument != .iam): {0}", old.Name), Logger.LogLevel.DEBUG);
+                    }
+                }
+
                 Logger.Log(string.Format("[>] SaveAll: {0} doc(s) a sauvegarder", toSave.Count), Logger.LogLevel.DEBUG);
 
-                foreach (var entry in toSave.OrderBy(x => x.Order))
+                // Phase 18 — Strategie 4-phases (fix segment corruption)
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                int iptCount = 0, subIamCount = 0, topUpdated = 0, topSaved = 0;
+
+                // Phase 1+2 : IPT (Order 0) puis Sub-IAM (Order 1)
+                foreach (var entry in toSave.Where(e => e.Order < 2).OrderBy(e => e.Order))
                 {
                     try
                     {
                         ComInvoke.Call(entry.Doc, "Save");
                         savedCount++;
+                        if (entry.Ext == ".ipt") iptCount++;
+                        else if (entry.Ext == ".iam") subIamCount++;
                         Logger.Log(string.Format("[+] Sauvegarde OK: {0}", entry.Name), Logger.LogLevel.DEBUG);
                     }
                     catch (Exception ex)
@@ -713,7 +931,50 @@ namespace InventorAutoSave.Services
                     }
                 }
 
-                Logger.Log(string.Format("[+] SaveAll: {0} doc(s), {1} ignore(s)", savedCount, skippedCount), Logger.LogLevel.INFO);
+                // Phase 3 : Update + Save Top Assembly (regenere les segments BREP)
+                var topEntry = toSave.FirstOrDefault(e => e.IsTopAssembly);
+                if (topEntry != null)
+                {
+                    try
+                    {
+                        Logger.Log(string.Format("[>] Update top assembly: {0}", topEntry.Name), Logger.LogLevel.DEBUG);
+                        try { ComInvoke.Call(topEntry.Doc, "Update"); topUpdated = 1; }
+                        catch (Exception exU) { Logger.Log(string.Format("[!] Update top echoue: {0}", exU.Message), Logger.LogLevel.WARNING); }
+
+                        ComInvoke.Call(topEntry.Doc, "Save");
+                        topSaved = 1;
+                        savedCount++;
+                        Logger.Log(string.Format("[+] Top sauvegarde: {0}", topEntry.Name), Logger.LogLevel.INFO);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log(string.Format("[!] Erreur Save top {0}: {1}", topEntry.Name, ex.Message), Logger.LogLevel.WARNING);
+                        skippedCount++;
+                    }
+                }
+
+                // Fallback : entries Order=3 (cas exotiques) sans Update
+                foreach (var entry in toSave.Where(e => e.Order == 3))
+                {
+                    try
+                    {
+                        ComInvoke.Call(entry.Doc, "Save");
+                        savedCount++;
+                        Logger.Log(string.Format("[+] Sauvegarde OK (fallback): {0}", entry.Name), Logger.LogLevel.DEBUG);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log(string.Format("[!] Erreur Save fallback {0}: {1}", entry.Name, ex.Message), Logger.LogLevel.WARNING);
+                        skippedCount++;
+                    }
+                }
+
+                sw.Stop();
+                Logger.Log(string.Format(
+                    "[+] SaveAll ordonne: {0} doc(s) | IPT={1}, Sub-IAM={2}, Top-IAM update={3}/save={4} | skip={5} | {6} ms",
+                    savedCount, iptCount, subIamCount, topUpdated, topSaved, skippedCount, sw.ElapsedMilliseconds),
+                    Logger.LogLevel.INFO);
+
                 var result = new SaveResult { Success = true, DocumentsSaved = savedCount, DocumentsSkipped = skippedCount, Mode = SaveMode.SaveAll };
                 SaveCompleted?.Invoke(this, result);
                 return result;
