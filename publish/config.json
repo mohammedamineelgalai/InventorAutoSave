@@ -1,0 +1,10 @@
+{
+  "SaveIntervalSeconds": 180,
+  "SaveMode": "SaveActive",
+  "EnableAutoSave": true,
+  "ShowNotifications": true,
+  "NotificationDurationSeconds": 3,
+  "StartWithWindows": false,
+  "SafetyChecks": true,
+  "RetryDelaySeconds": 5
+}
