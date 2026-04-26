@@ -58,6 +58,7 @@ L'application a ete concue pour remplacer le script AutoHotKey (AHK) precedent q
 ### Modes de sauvegarde
 - ✅ **SaveActive intelligent** — sauvegarde le doc actif + composants modifies recursivement
 - ✅ **SaveAll ordonne** — sauvegarde dans l'ordre ipt → iam → idw (ordre Inventor)
+- 🛡️ **Stratégie 4-phases anti-segment-corruption** — IPT → Sub-IAM → Update + Save Top, skip total des drawings/.ipn
 
 ### UI
 - ✅ **Systray** — icone dans la barre de notification, discret et permanent
@@ -74,6 +75,27 @@ L'application a ete concue pour remplacer le script AutoHotKey (AHK) precedent q
 ---
 
 ## Modes de Sauvegarde
+
+### Stratégie 4-phases — Anti-segment-corruption
+
+Validée par documentation Autodesk officielle. Garantit l'intégrité des segments BREP
+quand un sub-assembly est rouvert seul après modification :
+
+| Phase | Action | Order |
+|-------|--------|-------|
+| **1** | `Save()` toutes les **parts (.ipt) Dirty** | 0 |
+| **2** | `Save()` tous les **sub-assemblies (.iam) Dirty** (non-top) | 1 |
+| **3** | `Update()` puis `Save()` sur le **Top Assembly** | 2 |
+| **Skip** | **Total** des `.idw / .dwg / .ipn` | — |
+
+**Intelligence contextuelle** : le top s'adapte à `ActiveDocument`. Si le doc actif
+est un drawing/`.ipn`, on promeut automatiquement le 1er `.iam` Dirty référencé
+comme top effectif. Le drawing lui-même n'est jamais sauvé (drafter rebuild risqué).
+
+Telemetry par sauvegarde :
+```
+[+] SaveAll ordonne: 8 doc(s) | IPT=5, Sub-IAM=2, Top-IAM update=1/save=1 | skip=3 | 1247ms
+```
 
 ### SaveActive (recommande)
 Sauvegarde le document actif et **tous ses composants modifies** de maniere recursive:

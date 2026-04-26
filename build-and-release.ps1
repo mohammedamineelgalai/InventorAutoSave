@@ -2,7 +2,7 @@
 #  InventorAutoSave - BUILD & RELEASE SCRIPT
 #  Version: 1.0.0
 #  Author: Mohammed Amine Elgalai - XNRGY Climate Systems ULC
-#  Date: 2026-04-09
+#  Date: 2026-04-26
 #
 #  Usage:
 #    .\build-and-release.ps1                    # Build Release + Publish + Package

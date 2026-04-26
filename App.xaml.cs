@@ -75,7 +75,7 @@ namespace InventorAutoSave
             };
 
             // ── DEMARRAGE ──
-            Logger.Log("[+] InventorAutoSave v1.0.0 demarre", Logger.LogLevel.INFO);
+            Logger.Log(BuildInfo.StartupLog, Logger.LogLevel.INFO);
 
             try
             {
@@ -119,7 +119,7 @@ namespace InventorAutoSave
         {
             _trayIcon = new TaskbarIcon
             {
-                ToolTipText = "Inventor AutoSave v1.0.0",
+                ToolTipText = BuildInfo.AppToolTip,
                 Visibility = Visibility.Visible
             };
 

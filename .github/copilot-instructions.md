@@ -3,7 +3,7 @@
 > **Projet**: InventorAutoSave v1.0.0
 > **Auteur**: Mohammed Amine Elgalai — XNRGY Climate Systems ULC
 > **Stack**: C# 12, .NET 8.0, WPF, COM Interop (Autodesk Inventor)
-> **Date**: Avril 2026
+> **Date**: Avril 2026 (v1.0.0 — 26 avril 2026)
 
 ---
 
@@ -174,6 +174,60 @@ _timerService.SaveCompleted += (s, e) =>
 // INTERDIT — Invoke cause deadlock quand timer fire depuis ThreadPool
 // _timerService.SaveCompleted += (s, e) =>
 //     App.Current.Dispatcher.Invoke(() => OnSaveCompleted(e));  // ❌ DEADLOCK
+```
+
+### 7. STRATÉGIE 4-PHASES OBLIGATOIRE POUR SAUVEGARDE
+
+```
+╔══════════════════════════════════════════════════════════════════╗
+║  [!!!] NE JAMAIS sauvegarder en un seul bloc indéterministe.    ║
+║  Cause des erreurs de SEGMENT BREP au prochain ouvrage du       ║
+║  sub-assembly seul (corruption silencieuse des références).      ║
+╚══════════════════════════════════════════════════════════════════╝
+```
+
+Validée par doc Autodesk officielle (DevBlog Tip #8 + MVP J.S. Hould +
+`Document.Save2(SaveDependents=True)`).
+
+| Phase | Action | Order |
+|-------|--------|-------|
+| **1** | `Save()` toutes les **parts (.ipt) Dirty** | 0 |
+| **2** | `Save()` tous les **sub-assemblies (.iam) Dirty** (non-top) | 1 |
+| **3** | `Update()` **PUIS** `Save()` sur le **Top Assembly** | 2 |
+| **Skip** | **Total** des `.idw / .dwg / .ipn` (jamais sauvés directement) | — |
+
+**Intelligence contextuelle** : le top s'adapte à `ActiveDocument` :
+- Top `.iam` actif → lui-même = top
+- Sub `.iam` ouvert seul → lui-même = "top de session"
+- `.ipt` actif → Phase 1 unique
+- Drawing/`.ipn` actif → promouvoir le **1er `.iam` Dirty référencé** comme top effectif
+
+Champs critiques de `DocEntry` : `Ext` (string) + `IsTopAssembly` (bool).
+
+Telemetry obligatoire :
+```
+[+] SaveAll ordonne: 8 doc(s) | IPT=5, Sub-IAM=2, Top-IAM update=1/save=1 | skip=3 | 1247ms
+```
+
+Voir `DevDocs/HANDOFF_InventorAutoSave_SegmentFix.md` pour la spec complète.
+
+### 8. P/Invoke — partial class + LibraryImport
+
+```csharp
+// CORRECT — partial class + LibraryImport pour les marshalings simples
+public partial class InventorSaveService
+{
+    [LibraryImport("ole32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int CLSIDFromProgID(string lpszProgID, out Guid pclsid);
+
+    // ATTENTION — IDispatch marshaling NON supporté par LibraryImport
+    // → garder en [DllImport] pour GetActiveObject
+    [DllImport("oleaut32.dll", EntryPoint = "GetActiveObject", PreserveSig = false)]
+    private static extern void GetActiveObject(
+        [MarshalAs(UnmanagedType.LPStruct)] Guid rclsid,
+        IntPtr pvReserved,
+        [MarshalAs(UnmanagedType.IDispatch)] out object ppunk);
+}
 ```
 
 ---
@@ -558,6 +612,11 @@ StatusMessage         → Messages d'état
 - [ ] Les marqueurs logs sont ASCII: `[+]` `[-]` `[!]` `[i]` (pas d'emojis dans le code backend)
 - [ ] Emojis interfaces: uniquement professionnels (⚙️ 💡 📊 ✅ ❌ etc.) — JAMAIS visages/gestes/cœurs/animaux/transport
 - [ ] Version = 1.0.0 partout (titre, footer, tooltip, csproj, readme)
+- [ ] **Sauvegarde** : respecte la stratégie 4-phases (IPT → Sub-IAM → Update+Save Top, skip drawings/.ipn)
+- [ ] **Top assembly** identifié via `ActiveDocument.FullFileName` (intelligence contextuelle)
+- [ ] `DocEntry` doit avoir `Ext` + `IsTopAssembly`
+- [ ] Telemetry obligatoire : `IPT=X, Sub-IAM=Y, Top-IAM update=Z/save=W | skip=N | Tms`
+- [ ] `LibraryImport` uniquement pour marshalings simples ; `[DllImport]` pour `IDispatch`
 - [ ] Le chemin publish n'a PAS de sous-dossier `publish\`
 - [ ] **COMPILER UNIQUEMENT via `.\build-and-release.ps1`** — JAMAIS `dotnet build` / `dotnet publish` directement
 - [ ] Toute modification de settings propage vers menu ET fenêtre

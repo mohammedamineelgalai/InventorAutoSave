@@ -44,12 +44,13 @@ InventorAutoSave/
 │   │   ├── Retry Timer              # Si Inventor en calcul: retry toutes les N secondes
 │   │   └── Events: SaveCompleted, StatusChanged, TimerTick
 │   │
-│   ├── InventorSaveService.cs       # Connexion COM + sauvegarde (~640 lignes)
-│   │   ├── TryConnect()             # P/Invoke CLSIDFromProgID + GetActiveObject
+│   ├── InventorSaveService.cs       # Connexion COM + sauvegarde 4-phases (~995 lignes)
+│   │   ├── TryConnect()             # LibraryImport CLSIDFromProgID + DllImport GetActiveObject (IDispatch)
 │   │   ├── Save(SaveMode)           # Dispatch vers SaveActive ou SaveAll
-│   │   ├── SaveActiveDocument()     # Sauvegarde intelligente doc actif + composants dirty
-│   │   ├── SaveAllDocuments()       # Sauvegarde tous les docs ouverts (trie par type)
-│   │   ├── CollectDirtyDocuments()  # Parcours recursif des composants modifies
+│   │   ├── SaveActiveDocument()     # 4-phases avec intelligence contextuelle
+│   │   ├── SaveAllDocuments()       # 4-phases avec top via ActiveDocument
+│   │   ├── CollectDirtyDocuments()  # Static: detection top + skip drawings/.ipn
+│   │   ├── CollectRecursive()       # Static: recurse dans ReferencedDocuments
 │   │   ├── IsInventorCalculating()  # Detection calculs via titre fenetre
 │   │   └── GetDocumentCounts()      # Comptage docs ouverts/modifies
 │   │
@@ -179,6 +180,30 @@ Le crash d'origine venait de plusieurs causes possibles:
 - `AppDomain.UnhandledException` — Exceptions non gerees dans n'importe quel thread
 - `DispatcherUnhandledException` — Exceptions UI thread (WPF specifique)
 - `TaskScheduler.UnobservedTaskException` — Exceptions dans les `Task.Run()` non awaites
+
+### 6. Pourquoi la strategie de sauvegarde 4-phases ?
+
+L'ancienne approche sauvegardait tous les `.iam` avec `Order=1` mélangés (sub-asm et top
+mélangés) → ordre indéterministe → corruption des **segments BREP** au prochain ouvrage du
+sub-assembly seul. Validée par 3 sources autoritatives (Autodesk DevBlog Tip #8, J.S. Hould MVP,
+API `Document.Save2(SaveDependents=True)`).
+
+| Phase | Action | Order |
+|-------|--------|-------|
+| **1** | `Save()` parts (.ipt) Dirty | 0 |
+| **2** | `Save()` sub-assemblies (.iam) Dirty (non-top) | 1 |
+| **3** | `Update()` puis `Save()` Top Assembly | 2 |
+| **Skip** | `.idw / .dwg / .ipn` (pas de segments BREP, drafter rebuild risqué) | — |
+
+**Intelligence contextuelle** : le top s'adapte à `ActiveDocument`. Si root = drawing/`.ipn`,
+on promeut le 1er `.iam` Dirty référencé comme top effectif. Voir `DocEntry.IsTopAssembly`.
+
+### 7. Pourquoi `partial class` + `LibraryImport` ?
+
+`CLSIDFromProgID` ne marshalle que des chaînes simples → compatible source generator
+`[LibraryImport]` (SYSLIB1054). Les 2 autres P/Invoke (`GetActiveObject` avec
+`UnmanagedType.IDispatch`) **restent en `[DllImport]`** : `LibraryImport` ne supporte pas
+encore le marshaling IDispatch.
 
 ---
 

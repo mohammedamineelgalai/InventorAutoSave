@@ -6,6 +6,76 @@
 
 ---
 
+## v1.0.0 (2026-04-26) — Fix Segment Corruption + Code Cleanup
+
+### 🛡️ Fix critique : Sauvegarde 4-phases anti-segment-corruption
+
+**Problème résolu** : Sur les assemblages avec sub-assemblies, l'ancienne stratégie sauvegardait
+tous les `.iam` avec `Order=1` (mélangés), sans `Update()` sur le top → **erreurs de segment BREP**
+au prochain ouvrage du sub-assembly seul (corruption silencieuse des références).
+
+**Solution** : Stratégie 4-phases validée par documentation Autodesk officielle
+([DevBlog Tip #8](https://blog.autodesk.io/tips-for-creating-large-assemblies-using-inventor-api/) +
+[Jean-Sébastien Hould MVP](https://jshould.ca/blog/2019/01/02/inventor-macro-update-and-save-all/) +
+API `Document.Save2(SaveDependents=True)`).
+
+| Phase | Action | Order |
+|-------|--------|-------|
+| **1** | `Save()` sur **toutes les parts (.ipt) Dirty** | 0 |
+| **2** | `Save()` sur **tous les sub-assemblies (.iam) Dirty** (non-top) | 1 |
+| **3** | `Update()` puis `Save()` sur le **Top Assembly** identifié via `ActiveDocument` | 2 |
+| **Skip** | **Total** des `.idw / .dwg / .ipn` (drafter rebuild risqué + segments BREP absents) | — |
+
+#### 🧠 Intelligence contextuelle (RÈGLE ABSOLUE)
+
+Le top n'est jamais figé : il s'adapte à `ActiveDocument` :
+
+| `ActiveDocument` | Top effectif | Stratégie |
+|------------------|--------------|-----------|
+| **Top Assembly (.iam)** | Lui-même | Phase 1 → 2 → 3 (Update + Save) |
+| **Sub-Assembly (.iam) ouvert seul** | Lui-même = "top de session" | Idem (4 phases sur sa hiérarchie) |
+| **Part (.ipt)** | Lui-même | Phase 1 unique : Save direct |
+| **Drawing (.idw/.dwg)** ou **Présentation (.ipn)** | Skip ; promotion du **1er .iam Dirty** référencé comme top effectif | Phase 1 + 2 + 3 sur les modèles 3D, drawing/.ipn jamais sauvé |
+
+#### 📊 Telemetry par phase
+
+```
+[+] SaveAll ordonne: 8 doc(s) | IPT=5, Sub-IAM=2, Top-IAM update=1/save=1 | skip=3 | 1247ms
+[+] SaveActive ordonne: 4 doc(s) | IPT=2, Sub-IAM=1, Top-IAM update=1/save=1 | skip=0 | 638ms
+```
+
+### 🔧 Modifications de `Services/InventorSaveService.cs`
+
+- **`DocEntry`** étendu : nouvelles propriétés `Ext` (string) et `IsTopAssembly` (bool)
+- **`CollectDirtyDocuments(rootDoc)`** refactoré : détection top via extension du root, promotion du 1er `.iam` si root = drawing/`.ipn`
+- **`CollectRecursive`** refactoré : récursion dans `ReferencedDocuments` même pour drawings/`.ipn` (pour collecter leurs modèles 3D), mais skip TOTAL des drawings/`.ipn` du résultat final
+- **Nouvel ordering** : `0 = .ipt` / `1 = sub-.iam` / `2 = top-.iam` / `3 = autre`
+- **Boucle save 4-phases** appliquée à `SaveActiveDocument` ET `SaveAllDocuments`
+- **Telemetry** complète avec stopwatch par opération
+
+### 🧹 Cleanup VS Code (0 erreur, 0 warning)
+
+14 diagnostics analyseurs nettoyés sur `InventorSaveService.cs` :
+
+| Code | Catégorie | Fix |
+|------|-----------|-----|
+| **RCS1226** ×1 | Roslynator (doc XML) | Wrap `<para>...</para>` dans le bloc IMPORTANT |
+| **RCS1001** ×2 | Roslynator (braces) | `{ }` ajoutées aux `if` multi-lignes |
+| **IDE0300** ×5 | C# 12 collection expr | `new[] { ... }` → `[...]` (collection literals) |
+| **SYSLIB1054** ×1 | LibraryImport | Class `partial` + `[LibraryImport]` pour `CLSIDFromProgID` (les 2 autres P/Invoke restent en `[DllImport]` car IDispatch marshalling non supporté) |
+| **CA1860** ×1 | Performance | `.Any()` → `.Length == 0` |
+| **CA1840** ×2 | Threading | `Thread.CurrentThread.ManagedThreadId` → `Environment.CurrentManagedThreadId` |
+| **CA1822** ×2 | Static | `CollectRecursive` + `CollectDirtyDocuments` rendus `static` |
+
+### 📐 Build
+
+```
+.\build-and-release.ps1 -Quick
+```
+✅ 0 erreur, 0 warning, ~5.5s — exe ~68.5 MB self-contained
+
+---
+
 ## v2.1.0 (2026-04-08) — Fix COM Save + Timer
 
 ### 🔧 Fix critique: COM IDispatch (Sauvegarde fonctionnelle)

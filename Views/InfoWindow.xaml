@@ -1,7 +1,8 @@
 <Window x:Class="InventorAutoSave.Views.InfoWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Inventor AutoSave — Info — v1.0.0 — R 2026-04-09 — By Mohammed Amine Elgalai — XNRGY CLIMATE SYSTEMS ULC"
+        xmlns:svc="clr-namespace:InventorAutoSave.Services"
+        Title="{x:Static svc:BuildInfo.InfoTitle}"
         Width="780" Height="720"
         MinWidth="700" MinHeight="550"
         WindowStartupLocation="CenterOwner"
@@ -18,25 +19,20 @@
         </Grid.RowDefinitions>
 
         <!-- ═══════════════════════════════════════════════════════ -->
-        <!-- HEADER avec Gradient                                    -->
+        <!-- HEADER (style XEAT — solide #2A4A6F + border bottom)    -->
         <!-- ═══════════════════════════════════════════════════════ -->
-        <Border Grid.Row="0" Padding="30,25">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#1E3A5F" Offset="0"/>
-                    <GradientStop Color="#162D4A" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
+        <Border Grid.Row="0" Background="#2A4A6F" Padding="30,22"
+                BorderBrush="#4A7FBF" BorderThickness="0,0,0,2">
             <StackPanel HorizontalAlignment="Center">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <TextBlock Text="⚙️" FontSize="40" Foreground="White" VerticalAlignment="Center" Margin="0,0,15,0"/>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Inventor AutoSave" FontSize="26" FontWeight="Bold" Foreground="White"/>
-                        <TextBlock Text="Smart Tools Amine v1.0 — Sauvegarde automatique via API COM"
-                                   FontSize="14" Foreground="#90CAF9" Margin="0,5,0,0"/>
+                        <TextBlock Text="{x:Static svc:BuildInfo.InfoSubtitle}"
+                                   FontSize="13" Foreground="#B8D4E8" Margin="0,4,0,0"/>
                     </StackPanel>
                 </StackPanel>
-                <TextBlock FontSize="13" Foreground="#B8C7D6" Margin="0,15,0,0" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="650">
+                <TextBlock FontSize="12" Foreground="#B8D4E8" Margin="0,12,0,0" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="650">
                     <Run Text="Application systray qui sauvegarde automatiquement vos documents Autodesk Inventor via l'API COM. Remplace les scripts manuels par une solution robuste et configurable."/>
                 </TextBlock>
             </StackPanel>
@@ -133,6 +129,38 @@
                     </Border>
                 </Grid>
 
+                <!-- Card 5: Protection segments BREP (4 phases) -->
+                <Border Background="#252538" CornerRadius="10" Padding="15" Margin="0,0,0,10"
+                        BorderBrush="#9B59B6" BorderThickness="0,0,0,3">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Background="#9B59B6" CornerRadius="6" Width="35" Height="35" Margin="0,0,10,0">
+                                <TextBlock Text="🛠️" FontSize="18" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Protection segments BREP — Stratégie 4-phases" FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                                <TextBlock Text="Validée par doc Autodesk officielle (DevBlog Tip #8 + MVP J.S. Hould)" FontSize="11" Foreground="#90CAF9" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock Text="Sauvegarde ordonnée bottom-up pour éviter la corruption des segments BREP au prochain ouvrage du sub-assembly seul. Intelligence contextuelle : le top s'adapte au document actif."
+                                   FontSize="12" Foreground="#B8C7D6" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="✅ Phase 1 : Save toutes les parts (.ipt) Dirty" FontSize="11" Foreground="#4ADE80" Margin="15,3,0,0"/>
+                                <TextBlock Text="✅ Phase 2 : Save sub-assemblies (.iam) Dirty" FontSize="11" Foreground="#4ADE80" Margin="15,3,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="✅ Phase 3 : Update + Save Top Assembly" FontSize="11" Foreground="#4ADE80" Margin="15,3,0,0"/>
+                                <TextBlock Text="✅ Skip total des drawings/.ipn" FontSize="11" Foreground="#4ADE80" Margin="15,3,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
                 <!-- ─── ARCHITECTURE TECHNIQUE ─── -->
                 <TextBlock Text="🔧 Architecture technique" FontSize="16" FontWeight="Bold" Foreground="#4CC9F0" Margin="0,10,0,10"/>
 
@@ -188,15 +216,16 @@
         </ScrollViewer>
 
         <!-- ═══════════════════════════════════════════════════════ -->
-        <!-- FOOTER                                                  -->
+        <!-- FOOTER / COPYRIGHT BAR (style XEAT)                     -->
         <!-- ═══════════════════════════════════════════════════════ -->
-        <Border Grid.Row="2" Background="#252536" Padding="16,8">
+        <Border Grid.Row="2" Background="#1E1E2E" Padding="16,8"
+                BorderBrush="#4A7FBF" BorderThickness="0,1,0,0">
             <Grid>
-                <TextBlock HorizontalAlignment="Left" Foreground="#90CAF9" FontSize="10"
-                           Text="Inventor AutoSave — Info — v1.0.0 — R 2026-04-09 — By Mohammed Amine Elgalai — XNRGY CLIMATE SYSTEMS ULC"
+                <TextBlock HorizontalAlignment="Left" Foreground="#B8D4E8" FontSize="10" FontWeight="SemiBold"
+                           Text=".NET 8 | WPF | API COM Inventor"
                            VerticalAlignment="Center"/>
                 <TextBlock HorizontalAlignment="Right" Foreground="#90CAF9" FontSize="10"
-                           Text=".NET 8 | WPF | API COM Inventor"
+                           Text="{x:Static svc:BuildInfo.InfoTitle}"
                            VerticalAlignment="Center"/>
             </Grid>
         </Border>

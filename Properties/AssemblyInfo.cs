@@ -16,7 +16,7 @@ using System.Runtime.Versioning;
 [assembly: AssemblyTitle("InventorAutoSave")]
 [assembly: AssemblyProduct("InventorAutoSave")]
 [assembly: AssemblyCompany("XNRGY Climate Systems ULC")]
-[assembly: AssemblyDescription("Inventor AutoSave - Smart Tools Amine v1.0 - Sauvegarde automatique via API COM Inventor")]
+[assembly: AssemblyDescription("Inventor AutoSave - Smart Tools Amine v1.0 - Sauvegarde automatique via API COM Inventor (4-phases anti-segment-corruption)")]
 [assembly: AssemblyCopyright("© 2026 Mohammed Amine Elgalai - XNRGY Climate Systems ULC")]
 [assembly: AssemblyConfiguration("Release")]
 
