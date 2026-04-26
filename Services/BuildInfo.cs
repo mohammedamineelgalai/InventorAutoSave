@@ -63,7 +63,9 @@ public static class BuildInfo
         // 2) Fallback: assembly location (may be empty in SingleFile)
         try
         {
+#pragma warning disable IL3000 // Assembly.Location empty in single-file: harmless, MainModule path above is the primary source
             var loc = Assembly.GetExecutingAssembly().Location;
+#pragma warning restore IL3000
             if (!string.IsNullOrEmpty(loc) && File.Exists(loc))
                 return File.GetLastWriteTime(loc).ToString("yyyy-MM-dd");
         }
